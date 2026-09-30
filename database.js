@@ -154,3 +154,49 @@ export async function deleteDeck(id) {
   await deleteDoc(doc(db, "decks", id));
   await markChanged("decks");
 }
+
+
+// ---------- 4. MATCHES ----------
+// One match document looks like this:
+//   {
+//     deckId: "abc123",              // the exact deck VERSION you played
+//     deckName: "Dracula Discard",   // copies of the deck's name/version/hero, so the
+//     deckVersion: 2,                //   match still reads correctly even if the deck
+//     deckHero: "dracula",           //   is deleted later
+//     opponent: "PlayerName",
+//     enemyHero: "mulan",
+//     result: "win",                 // "win", "loss" or "tie"
+//     difficulty: "hard",            // "easy", "medium" or "hard"
+//     locations: ["the-hill", ...],  // up to 3 location ids
+//     enemyCards: ["bullseye", ...], // cards you saw them play (up to 12)
+//     playedAt: 1790745606275,       // when you played (milliseconds)
+//     createdAt, updatedAt
+//   }
+
+export async function loadMatches() {
+  return loadCollection("matches");
+}
+
+export async function createMatch(match) {
+  const ref = doc(collection(db, "matches"));
+  await setDoc(ref, {
+    ...match,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  await markChanged("matches");
+  return ref.id;
+}
+
+export async function updateMatch(id, changes) {
+  await updateDoc(doc(db, "matches", id), {
+    ...changes,
+    updatedAt: serverTimestamp()
+  });
+  await markChanged("matches");
+}
+
+export async function deleteMatch(id) {
+  await deleteDoc(doc(db, "matches", id));
+  await markChanged("matches");
+}

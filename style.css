@@ -682,6 +682,381 @@ main {
   color: var(--green);
 }
 
+/* ============================================================
+   ADD MATCH FORM (step 8)
+   ============================================================ */
+
+/* Leave room at the bottom so the save bar doesn't cover the last section */
+.match-form {
+  padding-bottom: 90px;
+}
+
+/* Each group of inputs is a <fieldset> with a <legend> title */
+.form-section {
+  border: 1px solid var(--panel);
+  border-radius: 12px;
+  padding: 10px 16px 14px 16px;
+  margin: 0 0 16px 0;
+  min-width: 0;                 /* stops wide content from stretching the page */
+}
+
+.form-section legend {
+  color: var(--crimson);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 0 6px;
+}
+
+/* A required section that was left empty */
+.form-section.missing {
+  border-color: var(--crimson);
+  box-shadow: 0 0 8px rgba(224, 36, 94, 0.5);
+}
+
+/* Opponent / Result / Difficulty side by side */
+.form-row {
+  display: grid;
+  grid-template-columns: 2fr 1.4fr 1.6fr;
+  gap: 16px;
+}
+
+/* ---------- Radio buttons drawn as tiles ----------
+   The real round radio button is made invisible (but still works),
+   and the box next to it changes look when it's checked.
+   "input:checked + .choice-box" = the .choice-box right after a checked input */
+.choice input,
+.hero-choice input,
+.seg input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* My deck choices */
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 8px;
+}
+
+.choice-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background-color: var(--background);
+  cursor: pointer;
+}
+
+.choice-box:hover {
+  border-color: var(--text-dim);
+}
+
+.choice input:checked + .choice-box,
+.hero-choice input:checked + .hero-choice-box {
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(62, 240, 176, 0.45);
+}
+
+/* A dotted outline when you move through the form with the Tab key */
+.choice input:focus-visible + .choice-box,
+.hero-choice input:focus-visible + .hero-choice-box,
+.seg input:focus-visible + span {
+  outline: 2px dashed var(--green);
+}
+
+.choice-art {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background-size: 200%;
+  background-position: 50% 14%;
+}
+
+.choice-name {
+  display: block;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.tag-tournament {
+  background-color: var(--green);
+  color: var(--background);
+}
+
+/* Enemy hero choices */
+.hero-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hero-choice-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 78px;
+  padding: 4px;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  background-color: var(--background);
+  cursor: pointer;
+}
+
+.hero-choice-box:hover {
+  border-color: var(--text-dim);
+}
+
+.hero-choice-art {
+  width: 66px;
+  height: 66px;
+  border-radius: 8px;
+  background-size: 200%;
+  background-position: 50% 14%;
+}
+
+.hero-choice-name {
+  font-size: 0.7rem;
+  text-align: center;
+  line-height: 1.15;
+  margin-top: 4px;
+}
+
+/* Win / Loss / Tie and Easy / Medium / Hard: buttons joined in a row */
+.segmented {
+  display: flex;
+  gap: 6px;
+}
+
+.seg {
+  flex: 1;                      /* all the same width */
+}
+
+.seg span {
+  display: block;
+  text-align: center;
+  padding: 9px 4px;
+  border: 1px solid var(--text-dim);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.seg span:hover {
+  border-color: var(--text);
+}
+
+.seg input:checked + span {
+  background-color: var(--green);
+  border-color: var(--green);
+  color: var(--background);
+  font-weight: bold;
+}
+
+.seg-loss input:checked + span {
+  background-color: var(--crimson);
+  border-color: var(--crimson);
+  color: var(--text);
+}
+
+.seg-tie input:checked + span {
+  background-color: #8a7fa3;
+  border-color: #8a7fa3;
+  color: var(--text);
+}
+
+/* Locations: 3 lists side by side */
+.location-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+select.text-input {
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.location-text {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+/* Cards they played */
+.picked-cards {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  margin-bottom: 10px;
+}
+
+.picked-title {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-right: 4px;
+}
+
+.picked-chip {
+  background-color: var(--green);
+  color: var(--background);
+  border: none;
+  border-radius: 14px;
+  padding: 4px 10px;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.picked-chip:hover {
+  background-color: var(--crimson);
+  color: var(--text);
+}
+
+.picker-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.picker-tools .text-input {
+  max-width: 260px;
+  margin: 0;
+}
+
+.cost-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cost-btn {
+  min-width: 34px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--text-dim);
+  background: none;
+  color: var(--text-dim);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.cost-btn.active {
+  background-color: var(--green);
+  border-color: var(--green);
+  color: var(--background);
+}
+
+/* The small card pictures: as many 62px squares per row as fit */
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(62px, 1fr));
+  gap: 6px;
+}
+
+.pick-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-color: var(--background);
+  background-size: 200%;
+  background-position: 50% 14%;
+  cursor: pointer;
+}
+
+.pick-thumb:hover {
+  border-color: var(--text-dim);
+}
+
+.pick-thumb.picked {
+  border-color: var(--green);
+  box-shadow: 0 0 8px rgba(62, 240, 176, 0.6);
+}
+
+/* A ✓ in the corner of selected cards */
+.pick-thumb.picked::after {
+  content: "✓";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--green);
+  color: var(--background);
+  font-size: 0.75rem;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* The mana cost in the bottom-left corner */
+.pick-cost {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  background-color: rgba(0, 0, 0, 0.75);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 0 5px;
+  border-radius: 6px;
+}
+
+/* ---------- Save bar, stuck to the bottom of the screen ---------- */
+.save-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background-color: rgba(27, 16, 48, 0.95);
+  border-top: 1px solid var(--panel);
+}
+
+.save-bar .btn {
+  flex-grow: 0;
+  padding: 10px 28px;
+  font-size: 1rem;
+}
+
+.btn-cancel {
+  text-decoration: none;
+}
+
+.save-message {
+  margin: 0 auto 0 0;           /* pushes the buttons to the right */
+  font-weight: bold;
+  text-align: left;
+}
+
+.save-message.ok    { color: var(--green); }
+.save-message.error { color: var(--crimson); }
+
+/* Phones and narrow windows: one column */
+@media (max-width: 800px) {
+  .form-row,
+  .location-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.
@@ -698,7 +1073,7 @@ main {
 
 /* Anything with the class "hidden" is not shown at all */
 .hidden {
-  display: none;
+  display: none !important;     /* !important = always wins over other rules */
 }
 
 /* The box in the middle holding the card */

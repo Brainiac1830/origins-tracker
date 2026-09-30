@@ -12,7 +12,7 @@
 
 // This file is a module, so it can import from our other modules
 import { watchUser } from "./firebase.js";
-import { loadDecks, createDeck, updateDeck } from "./database.js";
+import { loadDecks, loadMatches, createDeck, updateDeck } from "./database.js";
 
 
 // ---------- 1. THE DECK BEING BUILT ----------
@@ -25,6 +25,7 @@ let deckCards = [];
 // ---------- 2. EVERYTHING ELSE THE PAGE NEEDS TO REMEMBER ----------
 let signedIn = false;
 let allDecks = [];       // every saved deck (loaded after you sign in)
+let allMatches = [];     // every saved match (to know which decks have been played)
 let mode = "new";        // "new", "edit" or "copy"
 let sourceDeck = null;   // the saved deck we're editing or copying (null for "new")
 
@@ -259,6 +260,14 @@ function openSavedDeck(id, newMode) {
     showMessage("That deck wasn't found. It may have been deleted.");
     return;
   }
+  // A deck that has been played can't be edited directly (its results belong to
+  // those exact cards), so open it as a new version instead.
+  const used = allMatches.filter(function (m) { return m.deckId === deck.id; }).length;
+  if (newMode === "edit" && used > 0) {
+    newMode = "copy";
+    showMessage(`This deck was played in ${used} match${used === 1 ? "" : "es"}, so your changes will be saved as a new version.`);
+  }
+
   mode = newMode;
   sourceDeck = deck;
   deckHero = deck.hero;
@@ -423,7 +432,7 @@ watchUser(async function (user) {
 
   if (signedIn) {
     try {
-      allDecks = await loadDecks();
+      [allDecks, allMatches] = await Promise.all([loadDecks(), loadMatches()]);
     } catch (error) {
       showMessage("Couldn't load your decks: " + error.message);
       console.error(error);

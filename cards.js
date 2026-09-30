@@ -31,7 +31,7 @@ const CARDS = [
 
   // ---------- Characters (86) ----------
   { id: "itsy-bitsy-spider", name: "Itsy Bitsy Spider", type: "character", cost: 0, image: "assets/itsy_bitsy_spider.png" },
-  { id: "bagheera", name: "Bagheera", type: "character", cost: 1, image: "assets/bagheera.png" },
+  { id: "bagheera", name: "Bagheera", type: "character", cost: 2, image: "assets/bagheera.png" },
   { id: "mummy", name: "Mummy", type: "character", cost: 1, image: "assets/mummy.png" },
   { id: "thumbelina", name: "Thumbelina", type: "character", cost: 1, image: "assets/thumbelina.png" },
   { id: "toto", name: "Toto", type: "character", cost: 1, image: "assets/toto.png" },
@@ -131,11 +131,11 @@ const CARDS = [
   { id: "first-aid", name: "First Aid", type: "spell", cost: 2, image: "assets/first_aid.png" },
   { id: "lightning-strike", name: "Lightning Strike", type: "spell", cost: 2, image: "assets/lightning_strike.png" },
   { id: "merlins-prophecy", name: "Merlin's Prophecy", type: "spell", cost: 2, image: "assets/merlins_prophecy.png" },
-  { id: "mind-palace", name: "Mind Palace", type: "spell", cost: 2, image: "assets/mind_palace.png" },
+  { id: "mind-palace", name: "Mind Palace", type: "spell", cost: 3, image: "assets/mind_palace.png" },
   { id: "dark-omen", name: "Dark Omen", type: "spell", cost: 3, image: "assets/dark_omen.png" },
   { id: "en-passant", name: "En Passant", type: "spell", cost: 3, image: "assets/en_passant.png" },
   { id: "piggy-bank", name: "Piggy Bank", type: "spell", cost: 3, image: "assets/piggy_bank.png" },
-  { id: "spellbook", name: "Spellbook", type: "spell", cost: 3, image: "assets/spellbook.png" },
+  { id: "spellbook", name: "Spellbook", type: "spell", cost: 4, image: "assets/spellbook.png" },
   { id: "blow-the-house-down", name: "Blow the House Down", type: "spell", cost: 4, image: "assets/blow_the_house_down.png" },
   { id: "searing-light", name: "Searing Light", type: "spell", cost: 4, image: "assets/searing_light.png" },
   { id: "underworld-flare", name: "Underworld Flare", type: "spell", cost: 4, image: "assets/underworld_flare.png" },

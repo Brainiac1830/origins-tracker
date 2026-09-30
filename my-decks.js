@@ -5,7 +5,7 @@
 // ============================================================
 
 import { watchUser } from "./firebase.js";
-import { loadDecks, updateDeck, deleteDeck } from "./database.js";
+import { loadDecks, loadMatches, updateDeck, deleteDeck } from "./database.js";
 
 
 // ---------- 1. PAGE PARTS AND DATA ----------
@@ -17,6 +17,7 @@ const tournamentList  = document.getElementById("tournament-decks");
 const generalList     = document.getElementById("general-decks");
 
 let allDecks = [];   // every saved deck
+let allMatches = []; // every saved match (to know which decks have been played)
 
 
 // ---------- 2. LOAD AND DRAW ----------
@@ -25,13 +26,19 @@ let allDecks = [];   // every saved deck
 async function refresh() {
   pageStatus.textContent = "Loading your decks...";
   try {
-    allDecks = await loadDecks();
+    // Load decks and matches at the same time (Promise.all waits for both)
+    [allDecks, allMatches] = await Promise.all([loadDecks(), loadMatches()]);
     pageStatus.textContent = "";
     render();
   } catch (error) {
     pageStatus.textContent = "Couldn't load your decks: " + error.message;
     console.error(error);
   }
+}
+
+// How many saved matches were played with this exact deck version?
+function matchCount(deckId) {
+  return allMatches.filter(function (m) { return m.deckId === deckId; }).length;
 }
 
 // Sort decks by name, and newest version first within the same name
@@ -143,6 +150,10 @@ function createDeckTile(deck, check) {
     ? `<span class="deck-tile-hero" style="background-image: url('${hero.image}')" title="${hero.name}"></span>`
     : `<span class="deck-tile-hero no-hero">?</span>`;
 
+  // Matches played with this deck (win rates come in step 10)
+  const used = matchCount(deck.id);
+  const usedText = used === 0 ? "Not played yet" : `Played in ${used} match${used === 1 ? "" : "es"}`;
+
   const incompleteTag = isDeckComplete(deck) ? "" : `<span class="tag tag-warning">Incomplete</span>`;
 
   tile.innerHTML = `
@@ -155,7 +166,7 @@ function createDeckTile(deck, check) {
     </div>
     ${checkHtml}
     <div class="deck-tile-cards"></div>
-    <div class="dim small">Win rate: no matches yet</div>
+    <div class="dim small">${usedText}</div>
     <div class="deck-tile-buttons">
       <button class="btn btn-small" data-action="edit">Edit</button>
       <button class="btn btn-small" data-action="copy">New version</button>
@@ -197,6 +208,13 @@ function createDeckTile(deck, check) {
   for (const btn of lockedButtons) {
     btn.disabled = true;
     btn.title = "Deck lock has passed";
+  }
+
+  // A deck that has been played can't be edited: its results belong to those exact cards.
+  // To change it, make a New version instead (it gets its own results).
+  if (used > 0 && !editBtn.disabled) {
+    editBtn.disabled = true;
+    editBtn.title = "Already played: use New version to change it";
   }
 
   editBtn.addEventListener("click", function () {
@@ -251,7 +269,11 @@ async function moveDeck(deck, newCategory) {
 }
 
 async function removeDeck(deck) {
-  if (!confirm(`Delete "${deckLabel(deck)}"? This can't be undone.`)) {
+  const used = matchCount(deck.id);
+  const warning = used > 0
+    ? `\n\nIt was played in ${used} match${used === 1 ? "" : "es"}. Those matches will be kept, but won't count toward any deck's win rate.`
+    : "";
+  if (!confirm(`Delete "${deckLabel(deck)}"? This can't be undone.${warning}`)) {
     return;
   }
   try {

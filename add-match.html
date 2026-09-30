@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Match | Origins TCG Crimson Cup</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header class="page-header">
+    <h1>Origins TCG Crimson Cup</h1>
+  </header>
+
+  <!-- The menu. class="active" highlights the page you're on. -->
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="deck-builder.html">Deck Builder</a>
+    <a href="my-decks.html">My Decks</a>
+    <a href="add-match.html" class="active">Add Match</a>
+    <!-- Sign in / sign out. Filled in by firebase.js -->
+    <div class="auth-area" id="auth-area"></div>
+  </nav>
+
+  <main class="match-form">
+    <!-- "Sign in to add matches", "Loading...", "Editing match vs X" -->
+    <p class="page-status" id="page-status"></p>
+
+    <!-- A <fieldset> groups related inputs; its <legend> is the group's title.
+         Radio buttons with the same "name" belong together: picking one un-picks the others. -->
+
+    <!-- ===== MY DECK ===== -->
+    <fieldset class="form-section" id="section-deck">
+      <legend>My deck</legend>
+      <!-- Filled by add-match.js with one radio button per complete deck -->
+      <div class="choice-grid" id="deck-choices"></div>
+    </fieldset>
+
+    <!-- ===== OPPONENT / RESULT / DIFFICULTY (side by side) ===== -->
+    <div class="form-row">
+      <fieldset class="form-section" id="section-opponent">
+        <legend>Opponent</legend>
+        <!-- list="past-opponents" = suggest names from the <datalist> below as you type -->
+        <input type="text" id="opponent" class="text-input" placeholder="Player name" maxlength="40"
+               list="past-opponents" autocomplete="off">
+        <datalist id="past-opponents"></datalist>
+      </fieldset>
+
+      <fieldset class="form-section" id="section-result">
+        <legend>Result</legend>
+        <div class="segmented">
+          <label class="seg seg-win"><input type="radio" name="result" value="win"><span>Win</span></label>
+          <label class="seg seg-loss"><input type="radio" name="result" value="loss"><span>Loss</span></label>
+          <label class="seg seg-tie"><input type="radio" name="result" value="tie"><span>Tie</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-section" id="section-difficulty">
+        <legend>Difficulty</legend>
+        <div class="segmented">
+          <label class="seg"><input type="radio" name="difficulty" value="easy"><span>Easy</span></label>
+          <label class="seg"><input type="radio" name="difficulty" value="medium"><span>Medium</span></label>
+          <label class="seg"><input type="radio" name="difficulty" value="hard"><span>Hard</span></label>
+        </div>
+      </fieldset>
+    </div>
+
+    <!-- ===== ENEMY HERO ===== -->
+    <fieldset class="form-section" id="section-hero">
+      <legend>Enemy hero</legend>
+      <!-- Filled by add-match.js with one radio button per hero -->
+      <div class="hero-choices" id="hero-choices"></div>
+    </fieldset>
+
+    <!-- ===== LOCATIONS ===== -->
+    <fieldset class="form-section" id="section-locations">
+      <legend>Locations <span class="dim">(optional)</span></legend>
+      <!-- Filled by add-match.js with 3 drop-down lists -->
+      <div class="location-row" id="location-selects"></div>
+    </fieldset>
+
+    <!-- ===== CARDS THEY PLAYED ===== -->
+    <fieldset class="form-section" id="section-cards">
+      <legend>Cards they played <span class="dim">(optional · click to select, right-click to view big)</span></legend>
+
+      <!-- The cards you've picked, as little name tags you can click to remove -->
+      <div class="picked-cards" id="picked-cards"></div>
+
+      <div class="picker-tools">
+        <!-- type="search" gives a little ✕ to clear the box -->
+        <input type="search" id="card-search" class="text-input" placeholder="Search a card name..." autocomplete="off">
+        <!-- Mana cost filter buttons: All, 0, 1, 2... (filled by add-match.js) -->
+        <div class="cost-filter" id="cost-filter"></div>
+      </div>
+
+      <!-- Small card pictures, sorted by mana cost -->
+      <div class="pick-grid" id="pick-grid"></div>
+    </fieldset>
+  </main>
+
+  <!-- ===== SAVE BAR (stays at the bottom of the screen) ===== -->
+  <div class="save-bar">
+    <p class="save-message" id="save-message"></p>
+    <a class="btn btn-outline btn-cancel hidden" id="cancel-edit" href="match-history.html">Cancel</a>
+    <button class="btn" id="save-match">Save match</button>
+  </div>
+
+  <!-- Normal scripts first, then the modules -->
+  <script src="settings.js"></script>
+  <script src="cards.js"></script>
+  <script src="locations.js"></script>
+  <script src="common.js"></script>
+  <script src="modal.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="add-match.js"></script>
+</body>
+
+</html>
