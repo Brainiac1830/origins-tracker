@@ -1479,6 +1479,101 @@ a.match-row {
   }
 }
 
+/* ============================================================
+   TOOLS PAGE: LOCATIONS
+   ============================================================ */
+
+.tools-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tools-bar .text-input {
+  margin: 0;
+}
+
+#location-search {
+  max-width: 320px;
+}
+
+.sort-label {
+  margin-left: auto;            /* push the sort box to the right */
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.sort-select {
+  width: auto;
+}
+
+.tools-count {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--panel);
+  padding-bottom: 10px;
+}
+
+/* 4 cards per row on wide screens, fewer on narrow ones */
+.location-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.location-grid .empty-slot {
+  grid-column: 1 / -1;
+}
+
+.location-card {
+  background-color: var(--panel);
+  border: 1px solid #3a2a5c;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.location-card-name {
+  font-weight: bold;
+  padding: 10px 12px;
+  border-bottom: 1px solid #3a2a5c;
+}
+
+.location-card-text {
+  flex-grow: 1;                 /* the text area stretches so all cards line up */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  color: #d9cff0;
+}
+
+.location-card-stats {
+  padding: 0 14px 12px 14px;
+}
+
+.location-stat-line {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.location-percent {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--green);
+}
+
+.tag-rarity {
+  background-color: #ffd479;
+  color: var(--background);
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.

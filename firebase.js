@@ -107,14 +107,15 @@ async function checkDatabase(user) {
   }
 
   try {
-    await getDoc(doc(db, "meta", "lastChange"));
+    // Your own small "lastChange" document (see database.js)
+    await getDoc(doc(db, "users", user.uid, "meta", "lastChange"));
     sessionStorage.setItem("db-ok", user.email);
     status.classList.add("ok");
     status.title = "Database connected";
   } catch (error) {
     status.classList.add("error");
     status.title = error.code === "permission-denied"
-      ? "Database blocked this account. Check the email in your Firestore rules."
+      ? "This Google account isn't on the player list (the email list in the Firestore rules)."
       : "Database error: " + error.message;
     console.error(error);
   }

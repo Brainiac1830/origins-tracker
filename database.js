@@ -1,60 +1,86 @@
 // ============================================================
-// database.js — reading and writing your data in Firestore.
+// database.js — reading and writing data in Firestore.
 // Pages call these simple functions instead of talking to Firebase directly.
 //
 // How Firestore stores things:
-//   a "collection" is like a folder      -> "decks"
-//   a "document" is like a file inside   -> one deck
-//   each document holds fields           -> name, version, hero, cards...
+//   a "collection" is like a folder, a "document" is like a file inside it,
+//   and each document holds fields (name, version, hero, cards...).
 //
-// One deck document looks like this:
-//   {
-//     name: "Dracula Discard",
-//     version: 2,
-//     familyId: "abc123",        // same for v1, v2, v3... of one deck
-//     hero: "dracula",
-//     cards: ["bullseye", ...],  // 12 card ids
-//     category: "tournament",    // or "general"
-//     createdAt, updatedAt       // dates, filled in by Firebase
-//   }
+// ---------- Where everything lives ----------
+// Every player has their OWN private folder, named after their Google account id:
+//
+//   users/<your id>/decks/...           your decks
+//   users/<your id>/matches/...         your matches
+//   users/<your id>/meta/lastChange     "last changed" stamps (see below)
+//
+// Plus ONE shared document that every player adds to:
+//
+//   stats/locations    how many games each location appeared in, across all
+//                      players, e.g. { games: 40, "the-hill": 12, ... }
+//                      (no names or decks, just counts)
+//
+// One deck:  { name, version, familyId, hero, cards: [12 ids], category, createdAt, updatedAt }
+// One match: { deckId, deckName, deckVersion, deckHero, opponent, enemyHero,
+//              result, difficulty, locations: [up to 3 ids], enemyCards: [ids], playedAt, ... }
 //
 // ---------- Staying inside the free plan ----------
-// The free plan allows 50,000 reads per day, and every document downloaded
-// counts as 1 read. So instead of downloading every deck on every page load:
-//
-//   1. The database has one small document, meta/lastChange, holding the time
-//      each collection last changed, e.g. { decks: 1790745606275 }
-//   2. Your browser keeps a copy of the decks (in localStorage), together with
-//      the time that copy was made.
-//   3. Each page load reads ONLY meta/lastChange (1 read). If the times match,
-//      the browser's copy is still correct and nothing else is downloaded.
-//   4. Every save/change/delete updates meta/lastChange (1 extra write), so
-//      the next page load knows it must download fresh data. This also keeps
-//      your other devices (phone, laptop) up to date.
+// Every document downloaded counts as 1 read (50,000 free per day). So your
+// browser keeps a copy of your data, and each page load only reads your small
+// "lastChange" document (1 read). Only when something changed since the copy
+// was made is everything downloaded again. Every save updates lastChange.
 // ============================================================
 
-import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp }
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc,
+         serverTimestamp, increment, writeBatch }
   from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
-import { db } from "./firebase.js";
+import { db, auth } from "./firebase.js";
 
 
-// ---------- 1. THE BROWSER'S COPY (cache) ----------
+// ---------- 1. PATHS TO YOUR OWN FOLDER ----------
 
-// Every cache entry's name starts with this, so it's easy to find and clear
+// The signed-in player's account id (pages only call us once someone is signed in)
+function uid() {
+  return auth.currentUser.uid;
+}
+
+// collection(db, "users", <id>, "decks")  =  the folder users/<id>/decks
+function myCollection(name) {
+  return collection(db, "users", uid(), name);
+}
+
+// doc(db, "users", <id>, "decks", <deckId>)  =  one file in that folder
+function myDoc(name, id) {
+  return doc(db, "users", uid(), name, id);
+}
+
+function metaDoc() {
+  return myDoc("meta", "lastChange");
+}
+
+const LOCATION_STATS = ["stats", "locations"];   // the shared counter document
+
+
+// ---------- 2. THE BROWSER'S COPY (cache) ----------
+
+// Every cache entry's name starts with this (firebase.js clears them when you sign out).
+// The account id is part of the name, so two players on one computer never mix.
 export const CACHE_PREFIX = "origins-cache-";
 
+function cacheKey(name) {
+  return CACHE_PREFIX + uid() + "-" + name;
+}
+
 function readCache(name) {
-  // try/catch: if the saved copy is broken for some reason, just ignore it
   try {
-    return JSON.parse(localStorage.getItem(CACHE_PREFIX + name));
+    return JSON.parse(localStorage.getItem(cacheKey(name)));
   } catch (error) {
-    return null;
+    return null;   // broken or blocked: just ignore it
   }
 }
 
 function writeCache(name, data) {
   try {
-    localStorage.setItem(CACHE_PREFIX + name, JSON.stringify(data));
+    localStorage.setItem(cacheKey(name), JSON.stringify(data));
   } catch (error) {
     console.warn("Couldn't save the local copy:", error);   // the site still works without it
   }
@@ -64,75 +90,139 @@ function writeCache(name, data) {
 // so we turn them into plain numbers (milliseconds since 1970).
 function plainValues(data) {
   const result = {};
-  // Object.entries = Python's dict.items()
-  for (const [key, value] of Object.entries(data)) {
-    if (value && typeof value.toMillis === "function") {
-      result[key] = value.toMillis();
-    } else {
-      result[key] = value;
-    }
+  for (const [key, value] of Object.entries(data)) {       // Object.entries = Python's dict.items()
+    result[key] = value && typeof value.toMillis === "function" ? value.toMillis() : value;
   }
   return result;
 }
 
 
-// ---------- 2. "LAST CHANGED" STAMPS ----------
+// ---------- 3. ONE-TIME MOVE OF THE OLD SHARED DATA ----------
+// Before this update, all data sat in shared top-level folders ("decks", "matches").
+// The first time the owner signs in after the update, their data is copied into
+// their own folder (same ids, so matches still point to the right decks), and its
+// locations are added to the shared counter. For anyone else the old folders
+// can't be read (see the rules), so there's simply nothing to move.
+// The old copies are left untouched as a backup.
 
-// Records that a collection just changed. Costs 1 write.
-// Returns the new stamp (a number).
+let migrationPromise = null;   // so it only runs once, even if decks and matches load at the same time
+
+function ensureMigrated() {
+  if (!migrationPromise) {
+    migrationPromise = runMigration();
+  }
+  return migrationPromise;
+}
+
+async function runMigration() {
+  // Already done on this browser? (saves 1 read)
+  const doneKey = cacheKey("migrated");
+  try {
+    if (localStorage.getItem(doneKey) === "yes") {
+      return;
+    }
+  } catch (e) { /* storage blocked: just check the database */ }
+
+  const metaSnap = await getDoc(metaDoc());
+  if (metaSnap.exists() && metaSnap.data().migrated) {
+    try { localStorage.setItem(doneKey, "yes"); } catch (e) { /* not important */ }
+    return;
+  }
+
+  // Try to read the old shared folders. Not allowed = nothing to move.
+  let oldDecks = [];
+  let oldMatches = [];
+  try {
+    oldDecks = (await getDocs(collection(db, "decks"))).docs;
+    oldMatches = (await getDocs(collection(db, "matches"))).docs;
+  } catch (error) {
+    oldDecks = [];
+    oldMatches = [];
+  }
+
+  // Copy them in groups ("batches") of up to 400 writes, which Firestore saves all at once
+  const copies = [];
+  for (const d of oldDecks)   { copies.push([myDoc("decks", d.id), d.data()]); }
+  for (const m of oldMatches) { copies.push([myDoc("matches", m.id), m.data()]); }
+  for (let start = 0; start < copies.length; start += 400) {
+    const batch = writeBatch(db);
+    for (const [ref, data] of copies.slice(start, start + 400)) {
+      batch.set(ref, data);
+    }
+    await batch.commit();
+  }
+
+  // Add the old matches' locations to the shared counter
+  await changeLocationStats([], oldMatches.map(function (m) { return m.data().locations || []; }));
+
+  // Remember it's done (and mark both collections as changed so fresh copies are downloaded)
+  const now = Date.now();
+  await setDoc(metaDoc(), { migrated: true, decks: now, matches: now }, { merge: true });
+  try { localStorage.setItem(doneKey, "yes"); } catch (e) { /* not important */ }
+}
+
+
+// ---------- 4. "LAST CHANGED" STAMPS AND LOADING ----------
+
+// Records that a collection just changed. Costs 1 write. Returns the new stamp.
 async function markChanged(name) {
   const stamp = Date.now();
   // { merge: true } = only change this one field, keep the others
-  // [name]: stamp  = use the VALUE of name as the field name, e.g. { decks: 1790... }
-  await setDoc(doc(db, "meta", "lastChange"), { [name]: stamp }, { merge: true });
+  await setDoc(metaDoc(), { [name]: stamp }, { merge: true });
   return stamp;
 }
 
-// Loads every document of a collection, using the browser's copy when it's still correct.
+// Loads all of your documents in a collection, using the browser's copy when it's still correct.
+// If the database refuses (account not on the player list), a clear message is given instead.
 async function loadCollection(name) {
+  try {
+    return await loadCollectionInner(name);
+  } catch (error) {
+    if (error.code === "permission-denied") {
+      throw new Error("This Google account isn't on the player list yet. Ask the site owner to add your email.");
+    }
+    throw error;
+  }
+}
+
+async function loadCollectionInner(name) {
+  await ensureMigrated();
+
   // 1 read: when did this collection last change?
-  const metaSnap = await getDoc(doc(db, "meta", "lastChange"));
+  const metaSnap = await getDoc(metaDoc());
   let stamp = metaSnap.exists() ? (metaSnap.data()[name] || 0) : 0;
 
-  // Nothing changed since our copy was made? Use the copy (no more reads).
   const cached = readCache(name);
   if (cached && stamp !== 0 && cached.stamp === stamp) {
-    return cached.items;
+    return cached.items;                       // nothing changed: no more reads
   }
 
-  // Otherwise download everything (1 read per document)...
-  const snapshot = await getDocs(collection(db, name));
+  // Otherwise download everything (1 read per document)
+  const snapshot = await getDocs(myCollection(name));
   const items = snapshot.docs.map(function (d) {
     return { id: d.id, ...plainValues(d.data()) };   // "...": copy all fields in (Python's **dict)
   });
 
-  // ...make sure there's a stamp to compare against next time...
   if (stamp === 0) {
     stamp = await markChanged(name);
   }
-
-  // ...and keep a copy for next time
   writeCache(name, { stamp: stamp, items: items });
   return items;
 }
 
 
-// ---------- 3. DECKS ----------
+// ---------- 5. DECKS ----------
 
-// Get every deck. Returns a list of deck objects, each with its "id" added.
 export async function loadDecks() {
   return loadCollection("decks");
 }
 
 // Save a brand-new deck. Returns its new id.
 export async function createDeck(deck) {
-  // doc(collection(...)) makes an empty document with a new random id
-  const ref = doc(collection(db, "decks"));
-
+  const ref = doc(myCollection("decks"));        // a new empty document with a random id
   await setDoc(ref, {
     ...deck,
-    // A new v1 deck starts its own family, named after its own id
-    familyId: deck.familyId || ref.id,
+    familyId: deck.familyId || ref.id,           // a new v1 deck starts its own family
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
@@ -140,63 +230,87 @@ export async function createDeck(deck) {
   return ref.id;
 }
 
-// Change some fields of an existing deck, e.g. updateDeck(id, { category: "general" })
+// Change some fields, e.g. updateDeck(id, { category: "general" })
 export async function updateDeck(id, changes) {
-  await updateDoc(doc(db, "decks", id), {
-    ...changes,
-    updatedAt: serverTimestamp()
-  });
+  await updateDoc(myDoc("decks", id), { ...changes, updatedAt: serverTimestamp() });
   await markChanged("decks");
 }
 
-// Delete a deck for good
 export async function deleteDeck(id) {
-  await deleteDoc(doc(db, "decks", id));
+  await deleteDoc(myDoc("decks", id));
   await markChanged("decks");
 }
 
 
-// ---------- 4. MATCHES ----------
-// One match document looks like this:
-//   {
-//     deckId: "abc123",              // the exact deck VERSION you played
-//     deckName: "Dracula Discard",   // copies of the deck's name/version/hero, so the
-//     deckVersion: 2,                //   match still reads correctly even if the deck
-//     deckHero: "dracula",           //   is deleted later
-//     opponent: "PlayerName",
-//     enemyHero: "mulan",
-//     result: "win",                 // "win", "loss" or "tie"
-//     difficulty: "hard",            // "easy", "medium" or "hard"
-//     locations: ["the-hill", ...],  // up to 3 location ids
-//     enemyCards: ["bullseye", ...], // cards you saw them play (up to 12)
-//     playedAt: 1790745606275,       // when you played (milliseconds)
-//     createdAt, updatedAt
-//   }
+// ---------- 6. MATCHES ----------
+// Adding, editing and deleting a match also updates the shared location counter.
 
 export async function loadMatches() {
   return loadCollection("matches");
 }
 
 export async function createMatch(match) {
-  const ref = doc(collection(db, "matches"));
-  await setDoc(ref, {
-    ...match,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  });
+  const ref = doc(myCollection("matches"));
+  await setDoc(ref, { ...match, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  await changeLocationStats([], [match.locations]);
   await markChanged("matches");
   return ref.id;
 }
 
-export async function updateMatch(id, changes) {
-  await updateDoc(doc(db, "matches", id), {
-    ...changes,
-    updatedAt: serverTimestamp()
-  });
+// oldMatch = the match as it was before editing (to fix the location counts)
+export async function updateMatch(id, changes, oldMatch) {
+  await updateDoc(myDoc("matches", id), { ...changes, updatedAt: serverTimestamp() });
+  await changeLocationStats([oldMatch.locations || []], [changes.locations || []]);
   await markChanged("matches");
 }
 
-export async function deleteMatch(id) {
-  await deleteDoc(doc(db, "matches", id));
+// match = the match being deleted (to take its locations off the counter)
+export async function deleteMatch(id, match) {
+  await deleteDoc(myDoc("matches", id));
+  await changeLocationStats([match.locations || []], []);
   await markChanged("matches");
+}
+
+
+// ---------- 7. SHARED LOCATION COUNTER ----------
+
+// Takes games off the counter (removed) and adds games to it (added).
+// Each item is one game's list of location ids. A game only counts toward
+// "games" if at least one location was recorded for it.
+// increment(n) tells Firestore to add n to the number already there (n can be negative),
+// so two players saving at the same moment never overwrite each other.
+async function changeLocationStats(removed, added) {
+  const deltas = {};                              // e.g. { games: 1, "the-hill": 1 }
+
+  function count(games, sign) {
+    for (const locations of games) {
+      if (locations.length === 0) {
+        continue;
+      }
+      deltas.games = (deltas.games || 0) + sign;
+      for (const id of locations) {
+        deltas[id] = (deltas[id] || 0) + sign;
+      }
+    }
+  }
+  count(removed, -1);
+  count(added, +1);
+
+  // Turn the numbers into increment() instructions, skipping anything that cancels out to 0
+  const changes = {};
+  for (const [key, value] of Object.entries(deltas)) {
+    if (value !== 0) {
+      changes[key] = increment(value);
+    }
+  }
+  if (Object.keys(changes).length === 0) {
+    return;                                       // nothing to change: no write
+  }
+  await setDoc(doc(db, ...LOCATION_STATS), changes, { merge: true });
+}
+
+// Read the shared counter (1 read). Returns e.g. { games: 40, "the-hill": 12, ... }
+export async function loadLocationStats() {
+  const snap = await getDoc(doc(db, ...LOCATION_STATS));
+  return snap.exists() ? snap.data() : { games: 0 };
 }

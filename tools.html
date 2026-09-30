@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tools | Origins TCG Crimson Cup</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header class="page-header">
+    <h1>Origins TCG Crimson Cup</h1>
+  </header>
+
+  <!-- The menu. class="active" highlights the page you're on. -->
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="deck-builder.html">Deck Builder</a>
+    <a href="my-decks.html">My Decks</a>
+    <a href="match-history.html">Match History</a>
+    <a href="tools.html" class="active">Tools</a>
+    <!-- Sign in / sign out. Filled in by firebase.js -->
+    <div class="auth-area" id="auth-area"></div>
+  </nav>
+
+  <main>
+    <h2 class="section-title">Locations</h2>
+
+    <!-- Search + sort -->
+    <div class="tools-bar">
+      <input type="search" id="location-search" class="text-input" placeholder="Search locations or text..." autocomplete="off">
+      <label class="sort-label" for="location-sort">Sort</label>
+      <select id="location-sort" class="text-input sort-select">
+        <option value="common">Most common first</option>
+        <option value="rare">Least common first</option>
+        <option value="name">A to Z</option>
+      </select>
+    </div>
+
+    <!-- "Showing 45 of 45 locations · based on 40 games from all players" -->
+    <p class="tools-count" id="tools-count"></p>
+
+    <!-- One card per location (filled by tools.js) -->
+    <div class="location-grid" id="location-grid"></div>
+  </main>
+
+  <!-- Normal scripts first, then the modules -->
+  <script src="settings.js"></script>
+  <script src="locations.js"></script>
+  <script src="common.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="tools.js"></script>
+</body>
+
+</html>

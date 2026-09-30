@@ -217,7 +217,7 @@ function createRow(match) {
       return;
     }
     try {
-      await deleteMatch(match.id);
+      await deleteMatch(match.id, match);   // passing the match takes its locations off the shared counter
       // Remove it from our list and redraw (no need to download everything again)
       allMatches = allMatches.filter(function (m) { return m.id !== match.id; });
       render();

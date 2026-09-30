@@ -392,7 +392,7 @@ async function saveMatch() {
   saveBtn.disabled = true;
   try {
     if (editingMatch) {
-      await updateMatch(editingMatch.id, match);
+      await updateMatch(editingMatch.id, match, editingMatch);   // the old version fixes the location counts
       location.href = "match-history.html";       // back to the list
       return;
     }
