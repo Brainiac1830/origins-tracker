@@ -545,6 +545,60 @@ main {
   gap: 10px;
 }
 
+/* ---------- Tournament rules check (step 7) ---------- */
+
+/* Border colours on tournament decks */
+.deck-tile.deck-valid     { border-color: var(--green); }
+.deck-tile.deck-invalid   { border-color: var(--crimson); }
+.deck-tile.deck-unchecked { border-color: #6b5a8a; }   /* grey-purple */
+
+/* The message above the tournament decks */
+.verify-status {
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-weight: bold;
+  border: 1px solid;
+}
+.verify-status.status-grey { border-color: #6b5a8a; color: var(--text-dim); }
+.verify-status.status-ok   { border-color: var(--green); color: var(--green); }
+.verify-status.status-bad  { border-color: var(--crimson); color: var(--crimson); }
+
+.verify-status .dim {
+  font-weight: normal;
+}
+
+/* "✓ Valid" or the list of problems on each deck */
+.deck-check {
+  font-size: 0.8rem;
+  margin: 0;
+}
+.deck-check.ok  { color: var(--green); }
+.deck-check.bad {
+  color: var(--crimson);
+  padding-left: 18px;           /* room for the bullet points */
+}
+
+/* A card shared with another tournament deck: red outline + red dot in the corner */
+.mini-thumb {
+  position: relative;           /* lets us place the dot in its corner */
+}
+.mini-thumb.shared {
+  outline: 2px solid var(--crimson);
+}
+/* "::after" adds a small extra element inside, here used as the dot */
+.mini-thumb.shared::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: var(--crimson);
+  border: 1px solid var(--text);
+}
+
 .deck-tile-top {
   display: flex;
   align-items: center;

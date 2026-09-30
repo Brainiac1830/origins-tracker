@@ -15,7 +15,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, serverTimestamp }
+import { getFirestore, doc, getDoc }
   from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
 // Our own settings file (the ./ means "in this same folder")
@@ -51,6 +51,7 @@ function showSignedIn(user) {
     <button class="auth-btn" id="sign-out-btn">Sign out</button>
   `;
   document.getElementById("sign-out-btn").addEventListener("click", function () {
+    clearLocalCopies();
     signOut(auth);
   });
   checkDatabase(user);
@@ -77,16 +78,37 @@ async function signIn() {
 }
 
 
+// Signing out removes the copy of your data kept in this browser
+// (see database.js). Useful if you ever sign in on someone else's computer.
+function clearLocalCopies() {
+  // Go through the saved items backwards, removing ours as we go
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key.startsWith("origins-cache-")) {     // same prefix as CACHE_PREFIX in database.js
+      localStorage.removeItem(key);
+    }
+  }
+  sessionStorage.removeItem("db-ok");
+}
+
+
 // ---------- 4. DATABASE CHECK ----------
-// Writes one tiny test record. If the security rules let us, the dot turns green.
+// Reads one tiny document. If the security rules let us, the dot turns green.
 // If not, it turns red, and hovering over it explains why.
+// To save reads, this only really checks once per browser session
+// (sessionStorage is forgotten when you close the browser).
 async function checkDatabase(user) {
   const status = document.getElementById("db-status");
+
+  if (sessionStorage.getItem("db-ok") === user.email) {
+    status.classList.add("ok");
+    status.title = "Database connected";
+    return;
+  }
+
   try {
-    await setDoc(doc(db, "settings", "connection-test"), {
-      lastSignIn: serverTimestamp(),
-      email: user.email
-    });
+    await getDoc(doc(db, "meta", "lastChange"));
+    sessionStorage.setItem("db-ok", user.email);
     status.classList.add("ok");
     status.title = "Database connected";
   } catch (error) {

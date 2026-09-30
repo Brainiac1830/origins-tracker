@@ -12,6 +12,7 @@ import { loadDecks, updateDeck, deleteDeck } from "./database.js";
 const pageStatus      = document.getElementById("page-status");
 const lockNotice      = document.getElementById("lock-notice");
 const tournamentCount = document.getElementById("tournament-count");
+const verifyStatus    = document.getElementById("verify-status");
 const tournamentList  = document.getElementById("tournament-decks");
 const generalList     = document.getElementById("general-decks");
 
@@ -50,13 +51,17 @@ function render() {
   tournamentCount.textContent = `(${tournament.length}/${MAX_TOURNAMENT_DECKS})`;
   lockNotice.classList.toggle("hidden", !isDeckLocked());
 
+  // ----- Check the tournament rules (checkTournamentDecks is in common.js) -----
+  const check = checkTournamentDecks(tournament);
+  showVerifyStatus(check, tournament.length);
+
   // ----- Tournament decks -----
   tournamentList.innerHTML = "";
   if (tournament.length === 0) {
     tournamentList.innerHTML = `<p class="empty-slot">No tournament decks yet. Use "Add to tournament" in the Deck Builder, or "Move to tournament" below.</p>`;
   }
   for (const deck of tournament) {
-    tournamentList.appendChild(createDeckTile(deck));
+    tournamentList.appendChild(createDeckTile(deck, check));
   }
 
   // ----- General decks -----
@@ -65,17 +70,72 @@ function render() {
     generalList.innerHTML = `<p class="empty-slot">No general decks yet.</p>`;
   }
   for (const deck of general) {
-    generalList.appendChild(createDeckTile(deck));
+    generalList.appendChild(createDeckTile(deck, null));   // null = no rules check for general decks
+  }
+}
+
+// The message above the tournament decks
+function showVerifyStatus(check, count) {
+  verifyStatus.classList.remove("hidden", "status-grey", "status-ok", "status-bad");
+
+  if (count === 0) {
+    verifyStatus.classList.add("hidden");   // the "no tournament decks yet" box is enough
+    return;
+  }
+
+  if (!check.ready) {
+    verifyStatus.classList.add("status-grey");
+    verifyStatus.innerHTML = `Add ${MAX_TOURNAMENT_DECKS} decks to verify decks <span class="dim">(${count}/${MAX_TOURNAMENT_DECKS})</span>`;
+    return;
+  }
+
+  // Object.values(...) = the list of results (like Python's dict.values())
+  const invalidCount = Object.values(check.results).filter(function (r) { return !r.valid; }).length;
+  if (invalidCount === 0) {
+    verifyStatus.classList.add("status-ok");
+    verifyStatus.textContent = `✓ All ${MAX_TOURNAMENT_DECKS} tournament decks are valid`;
+  } else {
+    verifyStatus.classList.add("status-bad");
+    verifyStatus.innerHTML = `✗ ${invalidCount} of ${MAX_TOURNAMENT_DECKS} decks need changes.
+      <span class="dim">Cards with a red dot are shared with another tournament deck.</span>`;
   }
 }
 
 
 // ---------- 3. ONE DECK TILE ----------
-function createDeckTile(deck) {
+// "check" is the result of checkTournamentDecks (or null for general decks)
+function createDeckTile(deck, check) {
   const tile = document.createElement("div");
   tile.className = "deck-tile";
 
   const isTournament = deck.category === "tournament";
+
+  // This deck's own result, if the rules were checked
+  const result = check && check.ready ? check.results[deck.id] : null;
+
+  // ----- Border colour (tournament decks only) -----
+  //   grey  = fewer than 3 tournament decks, can't check yet
+  //   green = passes every rule
+  //   red   = breaks at least one rule
+  if (isTournament) {
+    if (!result) {
+      tile.classList.add("deck-unchecked");
+    } else if (result.valid) {
+      tile.classList.add("deck-valid");
+    } else {
+      tile.classList.add("deck-invalid");
+    }
+  }
+
+  // ----- The line under the name: "✓ Valid" or the list of problems -----
+  let checkHtml = "";
+  if (result && result.valid) {
+    checkHtml = `<div class="deck-check ok">✓ Valid · ${result.uniqueCount} unique cards</div>`;
+  } else if (result) {
+    // One line per problem. escapeHtml because problems contain deck names you typed.
+    const lines = result.problems.map(function (p) { return `<li>${escapeHtml(p)}</li>`; }).join("");
+    checkHtml = `<ul class="deck-check bad">${lines}</ul>`;
+  }
   const locked = isTournament && isDeckLocked();   // locked tournament decks can't change
   const hero = deck.hero ? findCard(deck.hero) : null;
 
@@ -93,6 +153,7 @@ function createDeckTile(deck) {
         <div class="dim small">${hero ? hero.name : "No hero"} · ${deck.cards.length}/${MAX_CARDS} cards ${incompleteTag}</div>
       </div>
     </div>
+    ${checkHtml}
     <div class="deck-tile-cards"></div>
     <div class="dim small">Win rate: no matches yet</div>
     <div class="deck-tile-buttons">
@@ -110,6 +171,12 @@ function createDeckTile(deck) {
     thumb.className = "mini-thumb";
     thumb.style.backgroundImage = `url('${card.image}')`;
     thumb.title = card.name;          // name shows when you hover
+
+    // Shared with another tournament deck? Add a red dot and say where.
+    if (result && result.shared[card.id]) {
+      thumb.classList.add("shared");
+      thumb.title = `${card.name} (also in ${result.shared[card.id].join(" and ")})`;
+    }
     thumb.addEventListener("click", function () {
       openModal(card);
     });
