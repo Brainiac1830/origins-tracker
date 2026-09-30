@@ -112,3 +112,26 @@ function checkTournamentDecks(decks) {
 
   return { ready: true, results: results };
 }
+
+// ---------- Win rates ----------
+// Counts wins, losses and ties in a list of matches.
+// Win rate = wins out of ALL games (ties count as games), as a whole percentage.
+// Example: winStats(matches) -> { games: 8, wins: 5, losses: 2, ties: 1, rate: 63 }
+function winStats(matches) {
+  const wins   = matches.filter(function (m) { return m.result === "win"; }).length;
+  const losses = matches.filter(function (m) { return m.result === "loss"; }).length;
+  const ties   = matches.filter(function (m) { return m.result === "tie"; }).length;
+  const games  = matches.length;
+  return {
+    games: games,
+    wins: wins,
+    losses: losses,
+    ties: ties,
+    rate: games > 0 ? Math.round((wins / games) * 100) : 0   // Math.round = round to a whole number
+  };
+}
+
+// Short date like "30 Sep, 2:30 pm"
+function formatShortDate(ms) {
+  return new Date(ms).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+}

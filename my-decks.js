@@ -150,9 +150,12 @@ function createDeckTile(deck, check) {
     ? `<span class="deck-tile-hero" style="background-image: url('${hero.image}')" title="${hero.name}"></span>`
     : `<span class="deck-tile-hero no-hero">?</span>`;
 
-  // Matches played with this deck (win rates come in step 10)
+  // Win rate of this exact version (winStats is in common.js)
   const used = matchCount(deck.id);
-  const usedText = used === 0 ? "Not played yet" : `Played in ${used} match${used === 1 ? "" : "es"}`;
+  const stats = winStats(allMatches.filter(function (m) { return m.deckId === deck.id; }));
+  const usedText = used === 0
+    ? "Not played yet"
+    : `<b class="rate-text">${stats.rate}% win rate</b> · ${stats.wins}W ${stats.losses}L ${stats.ties}T (${stats.games} game${stats.games === 1 ? "" : "s"})`;
 
   const incompleteTag = isDeckComplete(deck) ? "" : `<span class="tag tag-warning">Incomplete</span>`;
 

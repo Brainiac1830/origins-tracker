@@ -26,16 +26,43 @@
     <a href="index.html" class="active">Home</a>
     <a href="deck-builder.html">Deck Builder</a>
     <a href="my-decks.html">My Decks</a>
-    <a href="add-match.html">Add Match</a>
     <a href="match-history.html">Match History</a>
     <!-- Sign in / sign out. Filled in by firebase.js -->
     <div class="auth-area" id="auth-area"></div>
   </nav>
 
+  <!-- ===== DASHBOARD ===== -->
+  <main class="dashboard">
+    <!-- "Sign in to see your dashboard", "Loading..." -->
+    <p class="page-status" id="page-status"></p>
+
+    <!-- Games played, record, win rate, last 10 form -->
+    <section>
+      <h2 class="section-title">Overview</h2>
+      <div class="stat-tiles" id="overview"></div>
+    </section>
+
+    <!-- Your 3 tournament decks with their win rates -->
+    <section>
+      <h2 class="section-title">Tournament decks <a class="section-link" href="my-decks.html">My Decks →</a></h2>
+      <div class="dash-decks" id="dash-decks"></div>
+    </section>
+
+    <!-- The last 10 matches -->
+    <section>
+      <h2 class="section-title">Last 10 games <a class="section-link" href="match-history.html">See all →</a></h2>
+      <div class="history-list" id="recent-games"></div>
+    </section>
+  </main>
+
+  <!-- Normal scripts first, then the modules -->
   <script src="settings.js"></script>
+  <script src="cards.js"></script>
+  <script src="common.js"></script>
   <script src="countdown.js"></script>
-  <!-- type="module" lets this file use "import" -->
+  <!-- type="module" lets these files use "import" -->
   <script type="module" src="firebase.js"></script>
+  <script type="module" src="home.js"></script>
 </body>
 
 </html>

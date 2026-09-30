@@ -1307,6 +1307,178 @@ select.text-input {
   .match-vs { display: none; }
 }
 
+/* ============================================================
+   HOME DASHBOARD + WIN RATES (step 10)
+   ============================================================ */
+
+.dashboard section {
+  margin-bottom: 28px;
+}
+
+/* Small link at the right end of a section title, e.g. "See all →" */
+.section-link {
+  float: right;
+  color: var(--green);
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.85rem;
+}
+
+.section-link:hover {
+  text-decoration: underline;
+}
+
+/* ----- Overview tiles ----- */
+.stat-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 2fr;   /* the "last 10" tile is twice as wide */
+  gap: 12px;
+}
+
+.stat-tile {
+  background-color: var(--panel);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--text);
+}
+
+.stat-value .w { color: var(--green); }
+.stat-value .l { color: var(--crimson); }
+.stat-value .t { color: #b0a6c8; }
+
+.stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+}
+
+/* One letter-dot per recent game */
+.form-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.form-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+  cursor: default;
+}
+
+.dot-win  { background-color: var(--green); color: var(--background); }
+.dot-loss { background-color: var(--crimson); color: var(--text); }
+.dot-tie  { background-color: #8a7fa3; color: var(--text); }
+
+/* ----- Tournament deck cards ----- */
+.dash-decks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+
+.dash-decks .empty-slot {
+  grid-column: 1 / -1;
+}
+
+.dash-deck {
+  background-color: var(--panel);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Little status labels: "✓ Valid", "✗ Needs changes" */
+.chip {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.chip-ok   { background-color: var(--green); color: var(--background); }
+.chip-bad  { background-color: var(--crimson); color: var(--text); }
+.chip-grey { background-color: #4a3d63; color: var(--text-dim); }
+
+.dash-rate-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.dash-rate {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--green);
+}
+
+.dash-rate-empty {
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Win rate bar: grey track, green fill as wide as the win rate */
+.rate-bar {
+  height: 8px;
+  border-radius: 4px;
+  background-color: var(--background);
+  overflow: hidden;
+}
+
+.rate-fill {
+  height: 100%;
+  background-color: var(--green);
+  border-radius: 4px;
+}
+
+/* Win rate text on My Decks tiles */
+.rate-text {
+  color: var(--green);
+}
+
+/* ----- Last 10 games: Match History rows without the buttons ----- */
+a.match-row {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.match-main.compact {
+  grid-template-columns: 52px 1.3fr 22px 1.5fr 80px 120px;
+}
+
+@media (max-width: 800px) {
+  .stat-tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+  .stat-wide {
+    grid-column: 1 / -1;
+  }
+  .match-main.compact {
+    grid-template-columns: 52px 1fr 1fr;
+  }
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.

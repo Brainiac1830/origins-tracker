@@ -18,13 +18,14 @@
     <a href="index.html">Home</a>
     <a href="deck-builder.html">Deck Builder</a>
     <a href="my-decks.html">My Decks</a>
-    <a href="add-match.html" class="active">Add Match</a>
-    <a href="match-history.html">Match History</a>
+    <!-- Add Match is part of Match History, so Match History is highlighted -->
+    <a href="match-history.html" class="active">Match History</a>
     <!-- Sign in / sign out. Filled in by firebase.js -->
     <div class="auth-area" id="auth-area"></div>
   </nav>
 
   <main class="match-form">
+    <p><a class="text-link" href="match-history.html">← Back to Match History</a></p>
     <!-- "Sign in to add matches", "Loading...", "Editing match vs X" -->
     <p class="page-status" id="page-status"></p>
 
