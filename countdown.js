@@ -4,26 +4,24 @@
 // ============================================================
 
 
-// ---------- 1. SETTINGS (the only part you'll normally change) ----------
+// ---------- 1. THE COUNTDOWNS ----------
 //
 // "countdowns" is a list (JavaScript calls it an "array").
 // Each item inside { } is like a Python dictionary: key: value pairs.
 //
-// About the date: "2026-10-22T09:00:00-04:00" means
-//   22 Oct 2026, at 09:00, in a zone that is 4 hours behind UTC.
-//   That is US Eastern time (New York) in October.
-// To change a date, only edit the text inside the quotes.
+// The dates themselves live in settings.js (DECK_LOCK and TOURNAMENT_START),
+// so the deck lock rule and the countdown always use the same time.
 const countdowns = [
   {
     id: "deck-lock",
     title: "Deck lock",
-    date: new Date("2026-10-22T09:00:00-04:00"),
+    date: DECK_LOCK,
     finishedText: "Decks are locked!"
   },
   {
     id: "tournament-start",
     title: "Tournament start",
-    date: new Date("2026-10-22T09:00:00-04:00"),
+    date: TOURNAMENT_START,
     finishedText: "The tournament has started. Good luck!"
   }
 ];

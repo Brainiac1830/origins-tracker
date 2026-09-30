@@ -471,6 +471,163 @@ main {
   }
 }
 
+/* ---------- Deck builder: "Editing..." line ---------- */
+.deck-mode {
+  background-color: var(--background);
+  border-left: 3px solid var(--green);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  margin: 0 0 12px 0;
+}
+
+/* ---------- Small text helpers ---------- */
+.small {
+  font-size: 0.8rem;
+}
+
+.page-status {
+  color: var(--text-dim);
+}
+
+.lock-notice {
+  background-color: var(--panel);
+  border: 1px solid var(--crimson);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.text-link {
+  color: var(--green);
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+/* Little coloured labels, e.g. "Incomplete" */
+.tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 1px 7px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+.tag-warning {
+  background-color: var(--crimson);
+  color: var(--text);
+}
+
+/* ---------- My Decks: list of deck tiles ---------- */
+.deck-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+/* The "no decks yet" box should span the whole row */
+.deck-list .empty-slot {
+  grid-column: 1 / -1;
+}
+
+.deck-tile {
+  background-color: var(--panel);
+  border: 3px solid transparent;   /* step 7 will colour this green/red/grey */
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deck-tile-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* The hero picture, zoomed in on the artwork */
+.deck-tile-hero {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background-size: 200%;
+  background-position: 50% 14%;
+  border: 2px solid var(--green);
+}
+
+.deck-tile-hero.no-hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-color: var(--text-dim);
+  color: var(--text-dim);
+  font-size: 1.5rem;
+}
+
+.deck-tile-name {
+  font-weight: bold;
+  font-size: 1.05rem;
+}
+
+.version {
+  color: var(--green);
+  font-size: 0.85rem;
+}
+
+/* The 12 small card pictures: 6 per row */
+.deck-tile-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.mini-thumb {
+  aspect-ratio: 1;              /* always a square */
+  border-radius: 6px;
+  background-size: 200%;
+  background-position: 50% 14%;
+  background-color: var(--background);
+  cursor: pointer;
+}
+
+.mini-thumb:hover {
+  outline: 2px solid var(--green);
+}
+
+.deck-tile-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Buttons keep their natural size here (no stretching) */
+.deck-tile-buttons .btn {
+  flex-grow: 0;
+}
+
+/* Push Delete to the far right, away from the other buttons */
+.deck-tile-buttons .btn-danger {
+  margin-left: auto;
+}
+
+.btn-small {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.btn-outline {
+  background: none;
+  border: 1px solid var(--green);
+  color: var(--green);
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.

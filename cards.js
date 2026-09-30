@@ -1,10 +1,10 @@
 // ============================================================
-// cards.js — the list of every card in the game.
+// cards.js — the list of every card in the game (122 cards).
 //
-// When the dev team sends you the real cards:
-//   1. Put the images in the "assets" folder.
-//   2. Add one { ... } block per card below (copy an existing one).
-//   3. Don't forget the comma between blocks!
+// To add a card:
+//   1. Put its image in the "assets" folder.
+//   2. Copy one line below, paste it in the right group, and change it.
+//   3. Every line ends with a comma, except the very last one in the file.
 //
 // What each field means:
 //   id    : a unique short name, lowercase, no spaces. NEVER change it once
@@ -16,35 +16,131 @@
 // ============================================================
 
 const CARDS = [
-  // ---------- Heroes ----------
-  {
-    id: "dorothy",
-    name: "Dorothy",
-    type: "hero",
-    cost: 4,
-    image: "assets/dorothy.png"
-  },
-  {
-    id: "dracula",
-    name: "Dracula",
-    type: "hero",
-    cost: 4,
-    image: "assets/dracula.png"
-  },
+  // ---------- Heroes (11) ----------
+  { id: "dorothy", name: "Dorothy", type: "hero", cost: 4, image: "assets/dorothy.png" },
+  { id: "dracula", name: "Dracula", type: "hero", cost: 4, image: "assets/dracula.png" },
+  { id: "mulan", name: "Mulan", type: "hero", cost: 4, image: "assets/mulan.png" },
+  { id: "queen-of-hearts", name: "Queen of Hearts", type: "hero", cost: 4, image: "assets/queen_of_hearts.png" },
+  { id: "van-helsing", name: "Van Helsing", type: "hero", cost: 4, image: "assets/van_helsing.png" },
+  { id: "wicked-stepmother", name: "Wicked Stepmother", type: "hero", cost: 4, image: "assets/wicked_stepmother.png" },
+  { id: "merlin", name: "Merlin", type: "hero", cost: 5, image: "assets/merlin.png" },
+  { id: "king-arthur", name: "King Arthur", type: "hero", cost: 7, image: "assets/king_arthur.png" },
+  { id: "legion-of-the-dead", name: "Legion of the Dead", type: "hero", cost: 7, image: "assets/legion_of_the_dead.png" },
+  { id: "three-not-so-little-pigs", name: "Three Not So Little Pigs", type: "hero", cost: 7, image: "assets/three_not_so_little_pigs.png" },
+  { id: "robinhood", name: "Robin Hood", type: "hero", cost: 8, image: "assets/robinhood.png" },
 
-  // ---------- Characters and spells ----------
-  {
-    id: "itsy-bitsy-spider",
-    name: "Itsy Bitsy Spider",
-    type: "character",
-    cost: 0,
-    image: "assets/itsy_bitsy_spider.png"
-  },
-  {
-    id: "bullseye",
-    name: "Bullseye",
-    type: "spell",
-    cost: 1,
-    image: "assets/bullseye.png"
-  }
+  // ---------- Characters (86) ----------
+  { id: "itsy-bitsy-spider", name: "Itsy Bitsy Spider", type: "character", cost: 0, image: "assets/itsy_bitsy_spider.png" },
+  { id: "bagheera", name: "Bagheera", type: "character", cost: 1, image: "assets/bagheera.png" },
+  { id: "mummy", name: "Mummy", type: "character", cost: 1, image: "assets/mummy.png" },
+  { id: "thumbelina", name: "Thumbelina", type: "character", cost: 1, image: "assets/thumbelina.png" },
+  { id: "toto", name: "Toto", type: "character", cost: 1, image: "assets/toto.png" },
+  { id: "baby-bear", name: "Baby Bear", type: "character", cost: 2, image: "assets/baby_bear.png" },
+  { id: "banshee", name: "Banshee", type: "character", cost: 2, image: "assets/banshee.png" },
+  { id: "basilisk", name: "Basilisk", type: "character", cost: 2, image: "assets/basilisk.png" },
+  { id: "billy", name: "Billy", type: "character", cost: 2, image: "assets/billy.png" },
+  { id: "card-soldier", name: "Card Soldier", type: "character", cost: 2, image: "assets/card_soldier.png" },
+  { id: "don-quixote", name: "Don Quixote", type: "character", cost: 2, image: "assets/don_quixote.png" },
+  { id: "esmeralda", name: "Esmeralda", type: "character", cost: 2, image: "assets/esmeralda.png" },
+  { id: "huck-finn", name: "Huck Finn", type: "character", cost: 2, image: "assets/huck_finn.png" },
+  { id: "jack-in-the-box", name: "Jack-in-the-Box", type: "character", cost: 2, image: "assets/jack-in-the-box.png" },
+  { id: "lady-of-the-lake", name: "Lady of the Lake", type: "character", cost: 2, image: "assets/lady_of_the_lake.png" },
+  { id: "morgiana", name: "Morgiana", type: "character", cost: 2, image: "assets/morgiana.png" },
+  { id: "musketeer", name: "Musketeer", type: "character", cost: 2, image: "assets/musketeer.png" },
+  { id: "piglet", name: "Piglet", type: "character", cost: 2, image: "assets/piglet.png" },
+  { id: "roo", name: "Roo", type: "character", cost: 2, image: "assets/roo.png" },
+  { id: "rumple", name: "Rumple", type: "character", cost: 2, image: "assets/rumple.png" },
+  { id: "sandman", name: "Sandman", type: "character", cost: 2, image: "assets/sandman.png" },
+  { id: "scarecrow", name: "Scarecrow", type: "character", cost: 2, image: "assets/scarecrow.png" },
+  { id: "shahrazad", name: "Shahrazad", type: "character", cost: 2, image: "assets/shahrazad.png" },
+  { id: "three-blind-mice", name: "Three Blind Mice", type: "character", cost: 2, image: "assets/three_blind_mice.png" },
+  { id: "ugly-duckling", name: "Ugly Duckling", type: "character", cost: 2, image: "assets/ugly_duckling.png" },
+  { id: "aladdin", name: "Aladdin", type: "character", cost: 3, image: "assets/aladdin.png" },
+  { id: "ali-baba", name: "Ali Baba", type: "character", cost: 3, image: "assets/ali_baba.png" },
+  { id: "asanbosam", name: "Asanbosam", type: "character", cost: 3, image: "assets/asanbosam.png" },
+  { id: "beast", name: "Beast", type: "character", cost: 3, image: "assets/beast.png" },
+  { id: "big-bad-wolf", name: "Big Bad Wolf", type: "character", cost: 3, image: "assets/big_bad_wolf.png" },
+  { id: "black-knight", name: "Black Knight", type: "character", cost: 3, image: "assets/black_knight.png" },
+  { id: "cowardly-lion", name: "Cowardly Lion", type: "character", cost: 3, image: "assets/cowardly_lion.png" },
+  { id: "davy-crockett", name: "Davy Crockett", type: "character", cost: 3, image: "assets/davy_crockett.png" },
+  { id: "flying-monkey", name: "Flying Monkey", type: "character", cost: 3, image: "assets/flying_monkey.png" },
+  { id: "frog-prince", name: "Frog Prince", type: "character", cost: 3, image: "assets/frog_prince.png" },
+  { id: "golden-egg", name: "Golden Egg", type: "character", cost: 3, image: "assets/golden_egg.png" },
+  { id: "humpty", name: "Humpty", type: "character", cost: 3, image: "assets/humpty.png" },
+  { id: "jack", name: "Jack", type: "character", cost: 3, image: "assets/jack.png" },
+  { id: "jill", name: "Jill", type: "character", cost: 3, image: "assets/jill.png" },
+  { id: "kanga", name: "Kanga", type: "character", cost: 3, image: "assets/kanga.png" },
+  { id: "king-shahryar", name: "King Shahryar", type: "character", cost: 3, image: "assets/king_shahryar.png" },
+  { id: "mary", name: "Mary", type: "character", cost: 3, image: "assets/mary.png" },
+  { id: "pegasus", name: "Pegasus", type: "character", cost: 3, image: "assets/pegasus.png" },
+  { id: "quasimodo", name: "Quasimodo", type: "character", cost: 3, image: "assets/quasimodo.png" },
+  { id: "queen-of-the-night", name: "Queen of the Night", type: "character", cost: 3, image: "assets/queen_of_the_night.png" },
+  { id: "shield-maiden", name: "Shield Maiden", type: "character", cost: 3, image: "assets/shield_maiden.png" },
+  { id: "wicked-stepsisters", name: "Wicked Stepsisters", type: "character", cost: 3, image: "assets/wicked_stepsisters.png" },
+  { id: "wicked-witch-of-the-west", name: "Wicked Witch of the West", type: "character", cost: 3, image: "assets/wicked_witch_of_the_west.png" },
+  { id: "beauty", name: "Beauty", type: "character", cost: 4, image: "assets/beauty.png" },
+  { id: "boogeyman", name: "Boogeyman", type: "character", cost: 4, image: "assets/boogeyman.png" },
+  { id: "christopher-robin", name: "Christopher Robin", type: "character", cost: 4, image: "assets/christopher_robin.png" },
+  { id: "glinda", name: "Glinda", type: "character", cost: 4, image: "assets/glinda.png" },
+  { id: "huntsman", name: "Huntsman", type: "character", cost: 4, image: "assets/huntsman.png" },
+  { id: "imhotep", name: "Imhotep", type: "character", cost: 4, image: "assets/imhotep.png" },
+  { id: "jekyll", name: "Jekyll", type: "character", cost: 4, image: "assets/jekyll.png" },
+  { id: "lancelot", name: "Lancelot", type: "character", cost: 4, image: "assets/lancelot.png" },
+  { id: "little-john", name: "Little John", type: "character", cost: 4, image: "assets/little_john.png" },
+  { id: "magic-carpet", name: "Magic Carpet", type: "character", cost: 4, image: "assets/magic_carpet.png" },
+  { id: "marian", name: "Marian", type: "character", cost: 4, image: "assets/marian.png" },
+  { id: "mothman", name: "Mothman", type: "character", cost: 4, image: "assets/mothman.png" },
+  { id: "old-macdonald", name: "Old MacDonald", type: "character", cost: 4, image: "assets/old_macdonald.png" },
+  { id: "phuong-hoang", name: "Phuong Hoang", type: "character", cost: 4, image: "assets/phuong_hoang.png" },
+  { id: "puck", name: "Puck", type: "character", cost: 4, image: "assets/puck.png" },
+  { id: "tweedledum", name: "Tweedledum", type: "character", cost: 4, image: "assets/tweedledum.png" },
+  { id: "white-queen", name: "White Queen", type: "character", cost: 4, image: "assets/white_queen.png" },
+  { id: "baloo", name: "Baloo", type: "character", cost: 5, image: "assets/baloo.png" },
+  { id: "bigfoot", name: "Bigfoot", type: "character", cost: 5, image: "assets/bigfoot.png" },
+  { id: "boitata", name: "Boitata", type: "character", cost: 5, image: "assets/boitata.png" },
+  { id: "bridge-troll", name: "Bridge Troll", type: "character", cost: 5, image: "assets/bridge_troll.png" },
+  { id: "captain-ahab", name: "Captain Ahab", type: "character", cost: 5, image: "assets/captain_ahab.png" },
+  { id: "fairy-godmother", name: "Fairy Godmother", type: "character", cost: 5, image: "assets/fairy_godmother.png" },
+  { id: "galahad", name: "Galahad", type: "character", cost: 5, image: "assets/galahad.png" },
+  { id: "hare", name: "Hare", type: "character", cost: 5, image: "assets/hare.png" },
+  { id: "impundulu", name: "Impundulu", type: "character", cost: 5, image: "assets/impundulu.png" },
+  { id: "sorcerers-apprentice", name: "Sorcerer's Apprentice", type: "character", cost: 5, image: "assets/sorcerers_apprentice.png" },
+  { id: "the-green-knight", name: "The Green Knight", type: "character", cost: 5, image: "assets/the_green_knight.png" },
+  { id: "three-musketeers", name: "Three Musketeers", type: "character", cost: 5, image: "assets/three_musketeers.png" },
+  { id: "cockatrice", name: "Cockatrice", type: "character", cost: 6, image: "assets/cockatrice.png" },
+  { id: "genie", name: "Genie", type: "character", cost: 6, image: "assets/genie.png" },
+  { id: "guy-of-gisborne", name: "Guy of Gisborne", type: "character", cost: 6, image: "assets/guy_of_gisborne.png" },
+  { id: "koschei", name: "Koschei", type: "character", cost: 6, image: "assets/koschei.png" },
+  { id: "mowgli", name: "Mowgli", type: "character", cost: 6, image: "assets/mowgli.png" },
+  { id: "tin-woodman", name: "Tin Woodman", type: "character", cost: 6, image: "assets/tin_woodman.png" },
+  { id: "paul-bunyan", name: "Paul Bunyan", type: "character", cost: 7, image: "assets/paul_bunyan.png" },
+  { id: "bandersnatch", name: "Bandersnatch", type: "character", cost: 8, image: "assets/bandersnatch.png" },
+  { id: "ellen-trechend", name: "Ellen Trechend", type: "character", cost: 8, image: "assets/ellen_trechend.png" },
+
+  // ---------- Spells (25) ----------
+  { id: "bullseye", name: "Bullseye", type: "spell", cost: 1, image: "assets/bullseye.png" },
+  { id: "defense-matrix", name: "Defense Matrix", type: "spell", cost: 1, image: "assets/defense_matrix.png" },
+  { id: "freeze", name: "Freeze!", type: "spell", cost: 1, image: "assets/freeze.png" },
+  { id: "poison-apple", name: "Poison Apple", type: "spell", cost: 1, image: "assets/poison_apple.png" },
+  { id: "reinforcements", name: "Reinforcements", type: "spell", cost: 1, image: "assets/reinforcements.png" },
+  { id: "stroke-of-midnight", name: "Stroke of Midnight", type: "spell", cost: 1, image: "assets/stroke_of_midnight.png" },
+  { id: "trash-for-treasure", name: "Trash for Treasure", type: "spell", cost: 1, image: "assets/trash_for_treasure.png" },
+  { id: "twister-toss", name: "Twister Toss", type: "spell", cost: 1, image: "assets/twister_toss.png" },
+  { id: "animate-object", name: "Animate Object", type: "spell", cost: 2, image: "assets/animate_object.png" },
+  { id: "axe-throw", name: "Axe Throw", type: "spell", cost: 2, image: "assets/axe_throw.png" },
+  { id: "first-aid", name: "First Aid", type: "spell", cost: 2, image: "assets/first_aid.png" },
+  { id: "lightning-strike", name: "Lightning Strike", type: "spell", cost: 2, image: "assets/lightning_strike.png" },
+  { id: "merlins-prophecy", name: "Merlin's Prophecy", type: "spell", cost: 2, image: "assets/merlins_prophecy.png" },
+  { id: "mind-palace", name: "Mind Palace", type: "spell", cost: 2, image: "assets/mind_palace.png" },
+  { id: "dark-omen", name: "Dark Omen", type: "spell", cost: 3, image: "assets/dark_omen.png" },
+  { id: "en-passant", name: "En Passant", type: "spell", cost: 3, image: "assets/en_passant.png" },
+  { id: "piggy-bank", name: "Piggy Bank", type: "spell", cost: 3, image: "assets/piggy_bank.png" },
+  { id: "spellbook", name: "Spellbook", type: "spell", cost: 3, image: "assets/spellbook.png" },
+  { id: "blow-the-house-down", name: "Blow the House Down", type: "spell", cost: 4, image: "assets/blow_the_house_down.png" },
+  { id: "searing-light", name: "Searing Light", type: "spell", cost: 4, image: "assets/searing_light.png" },
+  { id: "underworld-flare", name: "Underworld Flare", type: "spell", cost: 4, image: "assets/underworld_flare.png" },
+  { id: "rain-of-arrows", name: "Rain of Arrows", type: "spell", cost: 5, image: "assets/rain_of_arrows.png" },
+  { id: "heroic-charge", name: "Heroic Charge", type: "spell", cost: 6, image: "assets/heroic_charge.png" },
+  { id: "forbidden-knowledge", name: "Forbidden Knowledge", type: "spell", cost: 8, image: "assets/forbidden_knowledge.png" },
+  { id: "obliterate", name: "Obliterate", type: "spell", cost: 9, image: "assets/obliterate.png" }
 ];

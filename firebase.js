@@ -99,7 +99,19 @@ async function checkDatabase(user) {
 }
 
 
-// ---------- 5. START ----------
+// ---------- 5. LET OTHER PAGES KNOW WHO'S SIGNED IN ----------
+// Other files call  watchUser(myFunction)  and myFunction(user) runs when the
+// page opens and every time you sign in or out (user is null when signed out).
+export function watchUser(callback) {
+  if (!isSetUp) {
+    callback(null);
+    return;
+  }
+  onAuthStateChanged(auth, callback);
+}
+
+
+// ---------- 6. START ----------
 if (!isSetUp) {
   authArea.innerHTML = `<span class="auth-warning">Firebase not set up yet</span>`;
 } else {
