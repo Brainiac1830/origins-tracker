@@ -1,5 +1,5 @@
 // ============================================================
-// locations.js — every location that can appear in a game (44).
+// locations.js — every location that can appear in a game (45).
 // Each game has 3 of them.
 //
 //   id     : unique short name. NEVER change it once matches are saved.
@@ -42,6 +42,7 @@ const LOCATIONS = [
   { id: "sherwood-forest", name: "Sherwood Forest", text: "Summon a Merry Man at a random location every turn.", rarity: null },
   { id: "soul-artillery", name: "Soul Artillery", text: "After a character dies here, deal 1 damage to BOTH barriers.", rarity: null },
   { id: "stomping-grounds", name: "Stomping Grounds", text: "Characters here have Trample.", rarity: null },
+  { id: "tectonic-decay", name: "Tectonic Decay", text: "After combat, deal 1 damage to both barriers here.", rarity: null },
   { id: "the-colosseum", name: "The Colosseum", text: "Characters here have Double Attack.", rarity: null },
   { id: "the-gallows", name: "The Gallows", text: "When a character enters play here, destroy the enemy across from it.", rarity: null },
   { id: "the-hill", name: "The Hill", text: "After combat, if there is more than one character here, destroy ALL characters who share the lowest power.", rarity: null },
