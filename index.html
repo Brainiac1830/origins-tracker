@@ -25,9 +25,13 @@
   <nav class="main-nav">
     <a href="index.html" class="active">Home</a>
     <a href="deck-builder.html">Deck Builder</a>
+    <!-- Sign in / sign out. Filled in by firebase.js -->
+    <div class="auth-area" id="auth-area"></div>
   </nav>
 
   <script src="countdown.js"></script>
+  <!-- type="module" lets this file use "import" -->
+  <script type="module" src="firebase.js"></script>
 </body>
 
 </html>

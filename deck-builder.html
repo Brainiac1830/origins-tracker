@@ -17,6 +17,8 @@
   <nav class="main-nav">
     <a href="index.html">Home</a>
     <a href="deck-builder.html" class="active">Deck Builder</a>
+    <!-- Sign in / sign out. Filled in by firebase.js -->
+    <div class="auth-area" id="auth-area"></div>
   </nav>
 
   <main>
@@ -39,6 +41,12 @@
       <!-- ===== RIGHT: my deck ===== -->
       <aside class="deck-panel">
         <h2 class="section-title">My deck</h2>
+
+        <!-- The deck's name. <label> is the text above the box; its "for"
+             matches the box's id, so clicking the text also puts the cursor in the box.
+             maxlength stops very long names. -->
+        <label class="field-label" for="deck-name">Deck name</label>
+        <input type="text" id="deck-name" class="text-input" placeholder="e.g. Dracula Discard" maxlength="40">
 
         <!-- The counters, e.g. "Hero 1/1" and "Cards 5/12". Filled by deck-builder.js -->
         <div class="deck-counters" id="deck-counters"></div>
@@ -76,6 +84,8 @@
   <!-- Load the card list FIRST, then the code that uses it -->
   <script src="cards.js"></script>
   <script src="deck-builder.js"></script>
+  <!-- type="module" lets this file use "import" -->
+  <script type="module" src="firebase.js"></script>
 </body>
 
 </html>

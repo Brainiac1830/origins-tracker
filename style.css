@@ -137,6 +137,47 @@ h1 {
   font-weight: bold;
 }
 
+/* ---------- Sign-in area (end of the menu) ---------- */
+.auth-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid var(--panel);   /* thin line separating it from the links */
+  font-size: 0.85rem;
+}
+
+.auth-btn {
+  background: none;
+  border: 1px solid var(--text-dim);
+  color: var(--text-dim);
+  border-radius: 20px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.auth-btn:hover {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.auth-name {
+  color: var(--text);
+}
+
+.auth-warning {
+  color: var(--crimson);
+}
+
+/* The little dot: grey while checking, green = database OK, red = problem */
+.auth-status {
+  color: var(--text-dim);
+  cursor: help;
+}
+.auth-status.ok    { color: var(--green); }
+.auth-status.error { color: var(--crimson); }
+
 /* ---------- Page content ---------- */
 main {
   max-width: 1200px;
@@ -261,6 +302,33 @@ main {
 .deck-panel .section-title {
   margin-top: 0;
   border-bottom-color: var(--background);
+}
+
+/* ---------- Text boxes ---------- */
+.field-label {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+.text-input {
+  width: 100%;
+  box-sizing: border-box;       /* padding stays INSIDE the 100% width */
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--text-dim);
+  background-color: var(--background);
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--green);   /* green border while you're typing in it */
 }
 
 .deck-counters {

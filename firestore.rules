@@ -1,0 +1,21 @@
+// ============================================================
+// firestore.rules — who is allowed to read and change your database.
+//
+// This file is only a copy for your records. The rules that count are the
+// ones you paste into the Firebase website:
+//   Firestore Database > Rules tab > paste > Publish
+//
+// Change YOUR-EMAIL@gmail.com to the Google account you sign in with.
+// Nobody else (and nobody signed out) can read or write anything.
+// ============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null
+                         && request.auth.token.email == "YOUR-EMAIL@gmail.com"
+                         && request.auth.token.email_verified == true;
+    }
+  }
+}

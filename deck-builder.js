@@ -22,6 +22,7 @@ let deckCards = [];
 // ---------- 3. FIND THE PARTS OF THE PAGE WE NEED ----------
 const heroGrid      = document.getElementById("hero-grid");
 const cardGrid      = document.getElementById("card-grid");
+const deckNameInput = document.getElementById("deck-name");
 const deckCounters  = document.getElementById("deck-counters");
 const deckMessage   = document.getElementById("deck-message");
 const deckHeroBox   = document.getElementById("deck-hero");
@@ -232,15 +233,20 @@ function updateScreen() {
 
 // ---------- 8. RESET BUTTON ----------
 resetBtn.addEventListener("click", function () {
+  // .value is the text typed in the box; .trim() removes spaces at both ends
+  // (same as Python's strip())
+  const hasName = deckNameInput.value.trim() !== "";
+
   // If the deck is already empty, there's nothing to reset
-  if (deckHero === null && deckCards.length === 0) {
+  if (deckHero === null && deckCards.length === 0 && !hasName) {
     return;
   }
   // Ask first, so one wrong click doesn't wipe your work.
   // confirm() shows an OK/Cancel box and gives back true (OK) or false (Cancel).
-  if (confirm("Remove every card from this deck?")) {
+  if (confirm("Clear the deck name and remove every card?")) {
     deckHero = null;
     deckCards = [];
+    deckNameInput.value = "";
     updateScreen();
   }
 });
