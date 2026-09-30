@@ -20,23 +20,52 @@
   </nav>
 
   <main>
-    <h2 class="section-title">Heroes</h2>
-    <!-- Empty for now: deck-builder.js fills it with the hero cards -->
-    <div class="card-grid" id="hero-grid"></div>
+    <!-- Two columns: the card list on the left, "My deck" on the right -->
+    <div class="builder-layout">
 
-    <h2 class="section-title">Cards</h2>
-    <!-- Empty for now: deck-builder.js fills it with the other cards -->
-    <div class="card-grid" id="card-grid"></div>
+      <!-- ===== LEFT: all the cards ===== -->
+      <section>
+        <p class="hint">Left-click: view card &nbsp;·&nbsp; Right-click: add to / remove from deck</p>
+
+        <h2 class="section-title">Heroes</h2>
+        <!-- Empty for now: deck-builder.js fills it with the hero cards -->
+        <div class="card-grid" id="hero-grid"></div>
+
+        <h2 class="section-title">Cards</h2>
+        <!-- Empty for now: deck-builder.js fills it with the other cards -->
+        <div class="card-grid" id="card-grid"></div>
+      </section>
+
+      <!-- ===== RIGHT: my deck ===== -->
+      <aside class="deck-panel">
+        <h2 class="section-title">My deck</h2>
+
+        <!-- The counters, e.g. "Hero 1/1" and "Cards 5/12". Filled by deck-builder.js -->
+        <div class="deck-counters" id="deck-counters"></div>
+
+        <div class="deck-buttons">
+          <!-- Save and Add need the database, which we set up in steps 5–6 -->
+          <button class="btn" id="save-btn" disabled title="Coming in step 6">Save</button>
+          <button class="btn" id="add-btn" disabled title="Coming in step 6">Add to my deck</button>
+          <button class="btn btn-danger" id="reset-btn">Reset</button>
+        </div>
+        <!-- Short messages like "Your deck is full" appear here -->
+        <p class="deck-message" id="deck-message"></p>
+
+        <h3 class="deck-subtitle">Hero</h3>
+        <div id="deck-hero"></div>
+
+        <h3 class="deck-subtitle">Cards <span class="dim">(each counts ×2)</span></h3>
+        <div id="deck-cards"></div>
+
+      </aside>
+
+    </div>
   </main>
 
   <!-- ---------- The big card view (the "modal") ----------
        It exists on the page all the time, but the class "hidden" keeps it
-       invisible. Clicking a card removes "hidden", which makes it appear.
-
-       Two layers:
-         .modal          = the dark see-through background covering the whole screen
-         .modal-content  = the box in the middle holding the big card
-       Clicking the dark background (outside the box) closes the modal. -->
+       invisible. Clicking a card removes "hidden", which makes it appear. -->
   <div class="modal hidden" id="card-modal">
     <div class="modal-content">
       <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>

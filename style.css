@@ -191,6 +191,218 @@ main {
   margin-top: 6px;
 }
 
+/* ---------- Deck builder layout ----------
+   Two columns: the card list takes the leftover space (1fr),
+   the deck panel on the right is always 300px wide. */
+.builder-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 28px;
+  align-items: start;
+}
+
+.hint {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-top: 0;
+}
+
+.dim {
+  color: var(--text-dim);
+  font-weight: normal;
+}
+
+/* A card that is in the deck: green border + badge showing */
+.card-tile {
+  position: relative;           /* lets us place the badge in its corner */
+}
+
+.card-tile.in-deck {
+  border-color: var(--green);
+  box-shadow: 0 0 10px rgba(62, 240, 176, 0.5);   /* soft green glow */
+}
+
+/* The badge ("×2" or "HERO") is hidden unless the tile is in the deck */
+.tile-badge {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background-color: var(--green);
+  color: var(--background);
+  font-weight: bold;
+  font-size: 0.75rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  z-index: 1;
+}
+
+.card-tile.in-deck .tile-badge {
+  display: block;
+}
+
+/* A card that can't be added right now (the deck or hero slot is full) */
+.card-tile.blocked {
+  opacity: 0.4;
+}
+
+/* ---------- Deck panel (right side) ----------
+   "sticky" keeps the panel on screen while you scroll down the card list. */
+.deck-panel {
+  background-color: var(--panel);
+  border-radius: 12px;
+  padding: 14px 16px;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;             /* scrollbar inside the panel if it gets too tall */
+}
+
+.deck-panel .section-title {
+  margin-top: 0;
+  border-bottom-color: var(--background);
+}
+
+.deck-counters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.deck-counters .ok {
+  color: var(--green);
+}
+
+.deck-counters .complete {
+  width: 100%;
+}
+
+.deck-message {
+  color: var(--crimson);
+  font-size: 0.85rem;
+  min-height: 1.2em;            /* keeps space so the panel doesn't jump */
+  margin: 8px 0;
+}
+
+.deck-subtitle {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin: 12px 0 6px 0;
+}
+
+.empty-slot {
+  color: var(--text-dim);
+  font-style: italic;
+  font-size: 0.85rem;
+  border: 1px dashed var(--text-dim);
+  border-radius: 8px;
+  padding: 10px;
+  margin: 0;
+  text-align: center;
+}
+
+/* One row in the deck list: [picture] [cost] [name .......] [×2] */
+.deck-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--background);
+  border-radius: 8px;
+  padding: 3px 10px 3px 3px;
+  margin-bottom: 3px;
+  cursor: pointer;
+}
+
+.deck-row:hover {
+  outline: 1px solid var(--green);
+}
+
+/* Small square picture zoomed in on the artwork part of the card.
+   background-size: 200%   = show the card at twice the box size (zoom in)
+   background-position     = which part to show: middle left-right, near the top */
+.deck-row-thumb {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background-size: 200%;
+  background-position: 50% 14%;
+}
+
+.deck-row-cost {
+  background-color: var(--green);
+  color: var(--background);
+  font-weight: bold;
+  font-size: 0.8rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;               /* never squash the circle */
+}
+
+.deck-row-name {
+  flex-grow: 1;                 /* take up all the space in the middle */
+  font-size: 0.9rem;
+}
+
+.deck-row-count {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ---------- Buttons ---------- */
+.deck-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btn {
+  flex-grow: 1;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--green);
+  color: var(--background);
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn:hover {
+  filter: brightness(1.1);
+}
+
+.btn-danger {
+  background-color: var(--crimson);
+  color: var(--text);
+}
+
+/* Greyed-out buttons that don't work yet */
+.btn:disabled {
+  background-color: #4a3d63;
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+/* On narrower screens, put the deck panel under the card list */
+@media (max-width: 900px) {
+  .builder-layout {
+    grid-template-columns: 1fr;
+  }
+  .deck-panel {
+    position: static;
+    max-height: none;
+  }
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.
