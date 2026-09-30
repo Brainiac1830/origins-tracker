@@ -1,34 +1,27 @@
 <!DOCTYPE html>
-<!-- This line tells the browser "this is a modern HTML page". Always the first line. -->
 <html lang="en">
 
 <head>
-  <!-- The <head> holds settings for the page. Nothing in here shows on screen. -->
   <meta charset="UTF-8">
-  <!-- This makes the page fit phone screens properly -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- The text shown on the browser tab -->
-  <title>Origins Match Tracker</title>
+  <title>Origins TCG Crimson Cup</title>
 
-  <!-- A little bit of styling (CSS). In step 2 we'll move this into its own file. -->
-  <style>
-    body {
-      background-color: #1b1030;   /* dark purple, like the cards */
-      color: white;                /* white text */
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 80px;
-    }
-    h1 {
-      color: #3ef0b0;              /* the green from the Crimson Cup poster */
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <!-- The <body> is everything you actually see on the page. -->
-  <h1>Origins Match Tracker</h1>
-  <p>My site is live! Next step: the tournament countdown.</p>
+  <!-- The header is one row with 3 parts: left countdown, title, right countdown.
+       countdown.js finds each box by its id and fills in the numbers. -->
+  <header class="top-bar">
+    <div class="countdown-box" id="deck-lock"></div>
+
+    <h1>Origins TCG Crimson Cup</h1>
+
+    <div class="countdown-box" id="tournament-start"></div>
+  </header>
+
+  <script src="countdown.js"></script>
 </body>
 
 </html>
