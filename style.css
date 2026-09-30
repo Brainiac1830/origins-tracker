@@ -103,6 +103,146 @@ h1 {
   color: var(--green);
 }
 
+/* ---------- Simple page header (pages without countdowns) ---------- */
+.page-header {
+  padding: 12px 0;
+}
+
+/* ---------- Menu (navigation) ---------- */
+.main-nav {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 20px 0 28px 0;
+}
+
+.main-nav a {
+  color: var(--text-dim);
+  text-decoration: none;        /* no underline */
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+}
+
+.main-nav a:hover {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* The page you're currently on */
+.main-nav a.active {
+  color: var(--background);
+  background-color: var(--green);
+  font-weight: bold;
+}
+
+/* ---------- Page content ---------- */
+main {
+  max-width: 1200px;
+  margin: 0 auto;               /* centre the content on wide screens */
+  text-align: left;
+}
+
+.section-title {
+  color: var(--crimson);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 1rem;
+  border-bottom: 1px solid var(--panel);
+  padding-bottom: 6px;
+}
+
+/* ---------- Card grid ----------
+   "auto-fill, minmax(130px, 1fr)" means: fit as many 130px-wide columns
+   as the screen allows, then stretch them to fill the row.
+   So big screens get more cards per row, small screens fewer. */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.card-tile {
+  background-color: var(--panel);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 6px;
+  cursor: pointer;              /* hand cursor, so it looks clickable */
+  text-align: center;
+  transition: transform 0.15s, border-color 0.15s;  /* smooth hover animation */
+}
+
+.card-tile:hover {
+  transform: translateY(-3px);  /* lift up slightly */
+  border-color: var(--green);
+}
+
+.card-tile img {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+}
+
+.card-name {
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
+
+/* ---------- Big card view (modal) ---------- */
+
+/* The dark see-through layer covering the whole screen.
+   position: fixed + inset: 0  =  stick to all 4 edges of the window. */
+.modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.75);   /* black at 75% */
+  display: flex;
+  justify-content: center;                 /* centre left-right */
+  align-items: center;                     /* centre top-bottom */
+  z-index: 100;                            /* sit on top of everything */
+}
+
+/* Anything with the class "hidden" is not shown at all */
+.hidden {
+  display: none;
+}
+
+/* The box in the middle holding the card */
+.modal-content {
+  position: relative;           /* lets us place the X in its corner */
+}
+
+.modal-content img {
+  display: block;
+  max-height: 85vh;             /* at most 85% of the window height */
+  max-width: 90vw;              /* at most 90% of the window width */
+  border-radius: 14px;
+}
+
+/* The round X button in the top-right corner */
+.modal-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;           /* makes it a circle */
+  border: 2px solid var(--text);
+  background-color: var(--crimson);
+  color: var(--text);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  background-color: var(--green);
+  color: var(--background);
+}
+
 /* ---------- Small screens (phones) ----------
    When the screen is narrower than 800px, stack everything:
    title on top, then the two countdowns side by side underneath. */

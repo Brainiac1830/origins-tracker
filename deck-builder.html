@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deck Builder | Origins TCG Crimson Cup</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header class="page-header">
+    <h1>Origins TCG Crimson Cup</h1>
+  </header>
+
+  <!-- The menu. class="active" highlights the page you're on. -->
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="deck-builder.html" class="active">Deck Builder</a>
+  </nav>
+
+  <main>
+    <h2 class="section-title">Heroes</h2>
+    <!-- Empty for now: deck-builder.js fills it with the hero cards -->
+    <div class="card-grid" id="hero-grid"></div>
+
+    <h2 class="section-title">Cards</h2>
+    <!-- Empty for now: deck-builder.js fills it with the other cards -->
+    <div class="card-grid" id="card-grid"></div>
+  </main>
+
+  <!-- ---------- The big card view (the "modal") ----------
+       It exists on the page all the time, but the class "hidden" keeps it
+       invisible. Clicking a card removes "hidden", which makes it appear.
+
+       Two layers:
+         .modal          = the dark see-through background covering the whole screen
+         .modal-content  = the box in the middle holding the big card
+       Clicking the dark background (outside the box) closes the modal. -->
+  <div class="modal hidden" id="card-modal">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      <img id="modal-image" src="" alt="">
+    </div>
+  </div>
+
+  <!-- Load the card list FIRST, then the code that uses it -->
+  <script src="cards.js"></script>
+  <script src="deck-builder.js"></script>
+</body>
+
+</html>
