@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Match History | Origins TCG Crimson Cup</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header class="page-header">
+    <h1>Origins TCG Crimson Cup</h1>
+  </header>
+
+  <!-- The menu. class="active" highlights the page you're on. -->
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="deck-builder.html">Deck Builder</a>
+    <a href="my-decks.html">My Decks</a>
+    <a href="add-match.html">Add Match</a>
+    <a href="match-history.html" class="active">Match History</a>
+    <!-- Sign in / sign out. Filled in by firebase.js -->
+    <div class="auth-area" id="auth-area"></div>
+  </nav>
+
+  <main>
+    <p class="page-status" id="page-status"></p>
+
+    <!-- ===== FILTERS ===== -->
+    <div class="history-filters">
+      <!-- Player search -->
+      <input type="search" id="player-search" class="text-input" placeholder="Search a player..." autocomplete="off">
+
+      <!-- Hero filter: a button that opens a small panel of hero pictures -->
+      <div class="hero-filter">
+        <button type="button" class="hero-filter-btn" id="hero-filter-btn">All heroes ▾</button>
+        <div class="hero-filter-panel hidden" id="hero-filter-panel"></div>
+      </div>
+
+      <a class="btn btn-small add-match-link" href="add-match.html">+ Add match</a>
+    </div>
+
+    <!-- "12 matches · 7W 4L 1T · 58% win rate" for the matches shown -->
+    <div class="history-summary" id="history-summary"></div>
+
+    <!-- The list of matches (filled by match-history.js) -->
+    <div class="history-list" id="history-list"></div>
+  </main>
+
+  <!-- Normal scripts first, then the modules -->
+  <script src="settings.js"></script>
+  <script src="cards.js"></script>
+  <script src="locations.js"></script>
+  <script src="common.js"></script>
+  <script src="modal.js"></script>
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="match-history.js"></script>
+</body>
+
+</html>
