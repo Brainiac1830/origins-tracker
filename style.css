@@ -390,15 +390,16 @@ main {
 }
 
 /* Small square picture zoomed in on the artwork part of the card.
-   background-size: 200%   = show the card at twice the box size (zoom in)
-   background-position     = which part to show: middle left-right, near the top */
+   background-size: 250%   = show the card at 2.5 times the box size (zoom in)
+   background-position     = which part to show: centred left-right, on the artwork
+   (every small card preview on the site uses these same two values) */
 .deck-row-thumb {
   width: 32px;
   height: 32px;
   flex-shrink: 0;
   border-radius: 6px;
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
 }
 
 .deck-row-cost {
@@ -611,8 +612,8 @@ main {
   height: 56px;
   flex-shrink: 0;
   border-radius: 10px;
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
   border: 2px solid var(--green);
 }
 
@@ -645,8 +646,8 @@ main {
 .mini-thumb {
   aspect-ratio: 1;              /* always a square */
   border-radius: 6px;
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
   background-color: var(--background);
   cursor: pointer;
 }
@@ -774,8 +775,8 @@ main {
   height: 40px;
   flex-shrink: 0;
   border-radius: 8px;
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
 }
 
 .choice-name {
@@ -816,8 +817,8 @@ main {
   width: 66px;
   height: 66px;
   border-radius: 8px;
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
 }
 
 .hero-choice-name {
@@ -969,8 +970,8 @@ select.text-input {
   border: 2px solid transparent;
   border-radius: 8px;
   background-color: var(--background);
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
   cursor: pointer;
 }
 
@@ -1107,8 +1108,8 @@ select.text-input {
   width: 24px;
   height: 24px;
   border-radius: 6px;
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
 }
 
 .hero-filter-panel {
@@ -1155,8 +1156,8 @@ select.text-input {
   width: 54px;
   height: 54px;
   border-radius: 8px;
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
 }
 
 .hero-option-name {
@@ -1234,8 +1235,8 @@ select.text-input {
   height: 36px;
   flex-shrink: 0;
   border-radius: 8px;
-  background-size: 200%;
-  background-position: 50% 14%;
+  background-size: 250%;
+  background-position: 50% 22%;
 }
 
 .match-difficulty {
