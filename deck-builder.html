@@ -16,8 +16,8 @@
   <!-- The menu. class="active" highlights the page you're on. -->
   <nav class="main-nav">
     <a href="index.html">Home</a>
-    <a href="deck-builder.html" class="active">Deck Builder</a>
-    <a href="my-decks.html">My Decks</a>
+    <!-- The Deck Builder is part of My Decks, so My Decks is highlighted -->
+    <a href="my-decks.html" class="active">My Decks</a>
     <a href="match-history.html">Match History</a>
     <a href="tools.html">Tools</a>
     <!-- Sign in / sign out. Filled in by firebase.js -->
@@ -30,6 +30,7 @@
 
       <!-- ===== LEFT: all the cards ===== -->
       <section>
+        <p><a class="text-link" href="my-decks.html">← Back to My Decks</a></p>
         <p class="hint">Left-click: view card &nbsp;·&nbsp; Right-click: add to / remove from deck</p>
 
         <h2 class="section-title">Heroes</h2>

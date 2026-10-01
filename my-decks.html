@@ -16,7 +16,6 @@
   <!-- The menu. class="active" highlights the page you're on. -->
   <nav class="main-nav">
     <a href="index.html">Home</a>
-    <a href="deck-builder.html">Deck Builder</a>
     <a href="my-decks.html" class="active">My Decks</a>
     <a href="match-history.html">Match History</a>
     <a href="tools.html">Tools</a>
@@ -31,7 +30,11 @@
     <!-- Shown after the deck lock time -->
     <p class="lock-notice hidden" id="lock-notice">🔒 Deck lock has passed. Tournament decks can't be changed any more.</p>
 
-    <h2 class="section-title">Tournament decks <span class="dim" id="tournament-count"></span></h2>
+    <!-- Title row: "Tournament decks (2/3)" on the left, "+ Build a deck" button on the right -->
+    <div class="title-row">
+      <h2 class="section-title">Tournament decks <span class="dim" id="tournament-count"></span></h2>
+      <a class="btn build-deck-link" href="deck-builder.html">+ Build a deck</a>
+    </div>
 
     <!-- "Add 3 decks to verify decks" / "All 3 decks are valid" / "1 deck needs changes" -->
     <div class="verify-status hidden" id="verify-status"></div>
@@ -41,7 +44,6 @@
     <h2 class="section-title">General decks</h2>
     <div class="deck-list" id="general-decks"></div>
 
-    <p><a class="text-link" href="deck-builder.html">+ Build a new deck</a></p>
   </main>
 
   <!-- Normal scripts first, then the modules -->

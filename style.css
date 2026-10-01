@@ -1657,6 +1657,29 @@ a.match-row {
   color: var(--background);
 }
 
+/* ----- A section title with a button on its right (My Decks: "+ Build a deck") ----- */
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--panel);   /* the underline now spans the whole row */
+  padding-bottom: 6px;
+  margin: 20px 0 14px 0;
+}
+
+.title-row .section-title {
+  flex-grow: 1;                 /* title takes the space, pushing the button right */
+  border-bottom: none;
+  margin: 0;
+  padding: 0;
+}
+
+.build-deck-link {
+  flex-grow: 0;
+  text-decoration: none;
+  white-space: nowrap;          /* keep "+ Build a deck" on one line */
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.
