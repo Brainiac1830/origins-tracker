@@ -1611,6 +1611,52 @@ a.match-row {
   border-radius: 10px;
 }
 
+/* ----- Dashboard: clickable tournament decks ----- */
+.dash-deck {
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.dash-deck:hover {
+  border-color: var(--text-dim);
+  transform: translateY(-2px);
+}
+
+/* The deck whose games are shown below */
+.dash-deck.selected {
+  border-color: var(--green);
+  box-shadow: 0 0 12px rgba(62, 240, 176, 0.4);
+}
+
+.section-hint {
+  font-size: 0.75rem;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: normal;
+  margin-left: 6px;
+}
+
+/* "✕ All decks" button next to the Last 10 games title */
+.clear-filter {
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--green);
+  background: none;
+  color: var(--green);
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.clear-filter:hover {
+  background-color: var(--green);
+  color: var(--background);
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.

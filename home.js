@@ -14,6 +14,13 @@ const pageStatus  = document.getElementById("page-status");
 const overviewBox = document.getElementById("overview");
 const decksBox    = document.getElementById("dash-decks");
 const recentBox   = document.getElementById("recent-games");
+const recentTitle = document.getElementById("recent-title");
+const recentClear = document.getElementById("recent-clear");
+
+// Kept after loading, so clicking a deck can redraw without downloading again
+let allDecks = [];
+let allMatches = [];
+let selectedDeckId = null;   // the tournament deck clicked on (null = show all games)
 
 const RESULT_WORDS = { win: "Win", loss: "Loss", tie: "Tie" };
 const RESULT_LETTERS = { win: "W", loss: "L", tie: "T" };
@@ -96,7 +103,15 @@ function renderTournamentDecks(decks, matches) {
       `;
 
     const card = document.createElement("div");
-    card.className = "dash-deck";
+    card.className = "dash-deck" + (deck.id === selectedDeckId ? " selected" : "");
+    card.title = deck.id === selectedDeckId ? "Click to show all games again" : "Click to see this deck's last 10 games";
+
+    // Click: show this deck's games below. Click the same deck again: back to all games.
+    card.addEventListener("click", function () {
+      selectedDeckId = deck.id === selectedDeckId ? null : deck.id;
+      renderTournamentDecks(allDecks, allMatches);   // redraw so the highlight moves
+      renderRecent(allMatches);
+    });
     card.innerHTML = `
       <div class="deck-tile-top">
         <span class="deck-tile-hero" style="background-image: url('${hero.image}')" title="${hero.name}"></span>
@@ -115,11 +130,23 @@ function renderTournamentDecks(decks, matches) {
 
 // ---------- 4. LAST 10 GAMES ----------
 function renderRecent(matches) {
-  const recent = [...matches].sort(function (a, b) { return b.playedAt - a.playedAt; }).slice(0, 10);
+  // If a tournament deck is selected, keep only the games played with it
+  const selectedDeck = allDecks.find(function (d) { return d.id === selectedDeckId; });
+  const pool = selectedDeck
+    ? matches.filter(function (m) { return m.deckId === selectedDeck.id; })
+    : matches;
+
+  // Title: "Last 10 games" or "Last 10 games · Vamp Control v2"
+  recentTitle.textContent = selectedDeck ? `Last 10 games · ${deckLabel(selectedDeck)}` : "Last 10 games";
+  recentClear.classList.toggle("hidden", !selectedDeck);
+
+  const recent = [...pool].sort(function (a, b) { return b.playedAt - a.playedAt; }).slice(0, 10);
 
   recentBox.innerHTML = "";
   if (recent.length === 0) {
-    recentBox.innerHTML = `<p class="empty-slot">No games yet. <a class="text-link" href="add-match.html">Add your first match</a>.</p>`;
+    recentBox.innerHTML = selectedDeck
+      ? `<p class="empty-slot">No games with this deck yet.</p>`
+      : `<p class="empty-slot">No games yet. <a class="text-link" href="add-match.html">Add your first match</a>.</p>`;
     return;
   }
 
@@ -156,6 +183,14 @@ function renderRecent(matches) {
 }
 
 
+// "✕ All decks" button: back to all games
+recentClear.addEventListener("click", function () {
+  selectedDeckId = null;
+  renderTournamentDecks(allDecks, allMatches);
+  renderRecent(allMatches);
+});
+
+
 // ---------- 5. START ----------
 watchUser(async function (user) {
   if (!user) {
@@ -168,11 +203,11 @@ watchUser(async function (user) {
 
   pageStatus.textContent = "Loading...";
   try {
-    const [decks, matches] = await Promise.all([loadDecks(), loadMatches()]);
+    [allDecks, allMatches] = await Promise.all([loadDecks(), loadMatches()]);
     pageStatus.textContent = "";
-    renderOverview(matches);
-    renderTournamentDecks(decks, matches);
-    renderRecent(matches);
+    renderOverview(allMatches);
+    renderTournamentDecks(allDecks, allMatches);
+    renderRecent(allMatches);
   } catch (error) {
     pageStatus.textContent = "Couldn't load your data: " + error.message;
     console.error(error);

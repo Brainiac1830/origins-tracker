@@ -45,13 +45,18 @@
 
     <!-- Your 3 tournament decks with their win rates -->
     <section>
-      <h2 class="section-title">Tournament decks <a class="section-link" href="my-decks.html">My Decks →</a></h2>
+      <h2 class="section-title">Tournament decks <span class="dim section-hint">click a deck to see its games</span> <a class="section-link" href="my-decks.html">My Decks →</a></h2>
       <div class="dash-decks" id="dash-decks"></div>
     </section>
 
     <!-- The last 10 matches -->
     <section>
-      <h2 class="section-title">Last 10 games <a class="section-link" href="match-history.html">See all →</a></h2>
+      <!-- The title changes to "Last 10 games · <deck name>" when a deck is selected above -->
+      <h2 class="section-title">
+        <span id="recent-title">Last 10 games</span>
+        <button type="button" class="clear-filter hidden" id="recent-clear">✕ All decks</button>
+        <a class="section-link" href="match-history.html">See all →</a>
+      </h2>
       <div class="history-list" id="recent-games"></div>
     </section>
   </main>
