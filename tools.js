@@ -14,6 +14,8 @@ import { loadLocationStats } from "./database.js";
 // ---------- 1. PAGE PARTS AND DATA ----------
 const searchInput = document.getElementById("location-search");
 const sortSelect  = document.getElementById("location-sort");
+const poolSelect  = document.getElementById("location-pool");
+const noticeBox   = document.getElementById("tournament-notice");
 const countLine   = document.getElementById("tools-count");
 const grid        = document.getElementById("location-grid");
 
@@ -38,9 +40,17 @@ function percentOf(loc) {
 function render() {
   const text = searchInput.value.trim().toLowerCase();
 
-  // Keep locations whose name OR text contains the search
+  // Keep locations whose name OR text contains the search,
+  // and that match the "Show" choice (all / tournament pool / disabled)
   let shown = LOCATIONS.filter(function (loc) {
-    return loc.name.toLowerCase().includes(text) || loc.text.toLowerCase().includes(text);
+    const textOk = loc.name.toLowerCase().includes(text) || loc.text.toLowerCase().includes(text);
+    let poolOk = true;
+    if (poolSelect.value === "pool") {
+      poolOk = !loc.disabledInTournament;
+    } else if (poolSelect.value === "disabled") {
+      poolOk = loc.disabledInTournament === true;
+    }
+    return textOk && poolOk;
   });
 
   // Sort. For "common"/"rare", locations with the same count are sorted by name.
@@ -75,7 +85,12 @@ function render() {
 
   for (const loc of shown) {
     const card = document.createElement("div");
-    card.className = "location-card";
+    card.className = "location-card" + (loc.disabledInTournament ? " disabled-location" : "");
+
+    // Red label for locations removed from the tournament pool
+    const disabledTag = loc.disabledInTournament
+      ? `<div class="disabled-tag">🚫 Disabled in tournament</div>`
+      : "";
 
     const rarity = loc.rarity ? `<span class="tag tag-rarity">${escapeHtml(loc.rarity)}</span>` : "";
     const statsHtml = stats
@@ -89,7 +104,7 @@ function render() {
       : "";
 
     card.innerHTML = `
-      <div class="location-card-name">${escapeHtml(loc.name)} ${rarity}</div>
+      <div class="location-card-name">${escapeHtml(loc.name)} ${rarity}${disabledTag}</div>
       <div class="location-card-text">${escapeHtml(loc.text)}</div>
       <div class="location-card-stats">${statsHtml}</div>
     `;
@@ -99,6 +114,26 @@ function render() {
 
 searchInput.addEventListener("input", render);
 sortSelect.addEventListener("change", render);
+poolSelect.addEventListener("change", render);
+
+// ---------- 3b. TOURNAMENT NOTICE ----------
+// Lists the locations marked  disabledInTournament: true  in locations.js
+function renderNotice() {
+  const disabled = LOCATIONS
+    .filter(function (loc) { return loc.disabledInTournament; })
+    .sort(function (a, b) { return a.name.localeCompare(b.name); });
+
+  if (disabled.length === 0) {
+    noticeBox.classList.add("hidden");
+    return;
+  }
+  const names = disabled.map(function (loc) { return `<b>${escapeHtml(loc.name)}</b>`; }).join(", ");
+  noticeBox.innerHTML = `
+    🚫 <b>${disabled.length} locations are disabled in the Crimson Cup tournament pool:</b> ${names}.
+    <span class="dim">They can still appear in demo games.</span>
+  `;
+}
+renderNotice();
 
 
 // ---------- 4. START ----------

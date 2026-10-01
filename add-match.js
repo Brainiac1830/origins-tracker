@@ -101,7 +101,9 @@ for (let i = 0; i < LOCATION_COUNT; i++) {
   select.className = "text-input";
   select.innerHTML = `<option value="">Location ${i + 1}: unknown</option>` +
     sortedLocations.map(function (loc) {
-      return `<option value="${loc.id}">${escapeHtml(loc.name)}</option>`;
+      // Locations removed from the tournament pool are marked, since they can still appear in demo games
+      const note = loc.disabledInTournament ? " (disabled in tournament)" : "";
+      return `<option value="${loc.id}">${escapeHtml(loc.name)}${note}</option>`;
     }).join("");
 
   // Under each list: what the chosen location does

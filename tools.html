@@ -27,10 +27,19 @@
   <main>
     <h2 class="section-title">Locations</h2>
 
+    <!-- Tournament announcement (filled by tools.js from locations.js) -->
+    <div class="tournament-notice" id="tournament-notice"></div>
+
     <!-- Search + sort -->
     <div class="tools-bar">
       <input type="search" id="location-search" class="text-input" placeholder="Search locations or text..." autocomplete="off">
-      <label class="sort-label" for="location-sort">Sort</label>
+      <label class="sort-label" for="location-pool">Show</label>
+      <select id="location-pool" class="text-input sort-select">
+        <option value="all">All locations</option>
+        <option value="pool">Tournament pool only</option>
+        <option value="disabled">Disabled in tournament</option>
+      </select>
+      <label class="sort-label sort-label-next" for="location-sort">Sort</label>
       <select id="location-sort" class="text-input sort-select">
         <option value="common">Most common first</option>
         <option value="rare">Least common first</option>

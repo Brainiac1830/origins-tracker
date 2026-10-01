@@ -1574,6 +1574,42 @@ a.match-row {
   color: var(--background);
 }
 
+/* ----- Tournament-disabled locations ----- */
+.tournament-notice {
+  background-color: rgba(224, 36, 94, 0.12);
+  border: 1px solid var(--crimson);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.sort-label-next {
+  margin-left: 6px;             /* only the first label pushes to the right */
+}
+
+.location-card.disabled-location {
+  border-color: var(--crimson);
+  opacity: 0.7;                 /* slightly faded */
+}
+
+.location-card.disabled-location:hover {
+  opacity: 1;
+}
+
+.disabled-tag {
+  display: block;               /* always on its own line under the name */
+  width: fit-content;           /* only as wide as its text */
+  margin: 6px auto 0 auto;      /* centred */
+  background-color: var(--crimson);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.
