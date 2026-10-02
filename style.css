@@ -1680,6 +1680,60 @@ a.match-row {
   white-space: nowrap;          /* keep "+ Build a deck" on one line */
 }
 
+/* ----- Tools: "Log a PvE game" box ----- */
+.quick-log {
+  background-color: var(--panel);
+  border: 1px dashed var(--green);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.quick-log-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.quick-log-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quick-log-selects {
+  flex-grow: 1;
+}
+
+.quick-log-selects .text-input {
+  margin: 0;
+}
+
+.quick-log-add {
+  flex-grow: 0;
+  padding: 9px 22px;
+}
+
+.quick-log-message {
+  margin: 8px 0 0 0;
+  font-size: 0.85rem;
+  color: var(--green);
+  min-height: 1.2em;
+}
+
+.error-text {
+  color: var(--crimson);
+}
+
+@media (max-width: 800px) {
+  .quick-log-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.

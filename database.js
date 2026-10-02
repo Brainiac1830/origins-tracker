@@ -314,3 +314,15 @@ export async function loadLocationStats() {
   const snap = await getDoc(doc(db, ...LOCATION_STATS));
   return snap.exists() ? snap.data() : { games: 0 };
 }
+
+// ---------- 8. LOCATIONS-ONLY GAMES (e.g. playtests against PvE) ----------
+// Adds one game's locations to the shared counter WITHOUT saving a match,
+// so your match history and win rates are not affected. (1 write)
+export async function logLocationsOnly(locations) {
+  await changeLocationStats([], [locations]);
+}
+
+// Takes a locations-only game back off the counter (for the Undo button). (1 write)
+export async function unlogLocationsOnly(locations) {
+  await changeLocationStats([locations], []);
+}

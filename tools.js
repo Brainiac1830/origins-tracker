@@ -8,7 +8,7 @@
 // ============================================================
 
 import { watchUser } from "./firebase.js";
-import { loadLocationStats } from "./database.js";
+import { loadLocationStats, logLocationsOnly, unlogLocationsOnly } from "./database.js";
 
 
 // ---------- 1. PAGE PARTS AND DATA ----------
@@ -20,6 +20,13 @@ const countLine   = document.getElementById("tools-count");
 const grid        = document.getElementById("location-grid");
 
 let stats = null;          // the shared counter, e.g. { games: 40, "the-hill": 12 } (null = not loaded)
+
+const quickBox     = document.getElementById("quick-log");
+const quickSelects = document.getElementById("quick-log-selects");
+const quickAddBtn  = document.getElementById("quick-log-add");
+const quickMessage = document.getElementById("quick-log-message");
+const quickLists   = [];       // the 3 drop-down lists
+let lastLogged = null;         // the last locations-only game added (for Undo)
 
 
 // ---------- 2. HELPERS ----------
@@ -136,10 +143,93 @@ function renderNotice() {
 renderNotice();
 
 
+// ---------- 3c. LOG A PVE GAME (LOCATIONS ONLY) ----------
+// 3 drop-down lists, like on the Add Match form. A location can only be picked once.
+const sortedLocations = [...LOCATIONS].sort(function (a, b) { return a.name.localeCompare(b.name); });
+
+for (let i = 0; i < 3; i++) {
+  const select = document.createElement("select");
+  select.className = "text-input";
+  select.innerHTML = `<option value="">Location ${i + 1}</option>` +
+    sortedLocations.map(function (loc) {
+      const note = loc.disabledInTournament ? " (disabled in tournament)" : "";
+      return `<option value="${loc.id}">${escapeHtml(loc.name)}${note}</option>`;
+    }).join("");
+  select.addEventListener("change", updateQuickOptions);
+  quickSelects.appendChild(select);
+  quickLists.push(select);
+}
+
+// Grey out a location in the other lists once it's picked in one
+function updateQuickOptions() {
+  const chosen = quickLists.map(function (s) { return s.value; });
+  for (const select of quickLists) {
+    for (const option of select.options) {
+      option.disabled = option.value !== "" && option.value !== select.value && chosen.includes(option.value);
+    }
+  }
+}
+
+// Message under the box, with an optional Undo button
+function showQuickMessage(html, withUndo) {
+  quickMessage.innerHTML = html + (withUndo ? ` <button type="button" class="clear-filter" id="quick-undo">Undo</button>` : "");
+  if (withUndo) {
+    document.getElementById("quick-undo").addEventListener("click", undoQuickLog);
+  }
+}
+
+function locationNames(ids) {
+  return ids.map(function (id) { return LOCATIONS.find(function (l) { return l.id === id; }).name; }).join(", ");
+}
+
+quickAddBtn.addEventListener("click", async function () {
+  const picked = quickLists.map(function (s) { return s.value; }).filter(function (v) { return v !== ""; });
+  if (picked.length === 0) {
+    showQuickMessage(`<span class="error-text">Pick at least one location first.</span>`, false);
+    return;
+  }
+  quickAddBtn.disabled = true;
+  try {
+    await logLocationsOnly(picked);
+    lastLogged = picked;
+    for (const select of quickLists) {
+      select.value = "";                // empty the lists, ready for the next game
+    }
+    updateQuickOptions();
+    stats = await loadLocationStats();  // refresh the numbers (1 read)
+    render();
+    showQuickMessage(`✓ Added: ${escapeHtml(locationNames(picked))}`, true);
+  } catch (error) {
+    showQuickMessage(`<span class="error-text">Couldn't save: ${escapeHtml(error.message)}</span>`, false);
+  } finally {
+    quickAddBtn.disabled = false;
+  }
+});
+
+// Take the last locations-only game back off the stats
+async function undoQuickLog() {
+  if (!lastLogged) {
+    return;
+  }
+  const undone = lastLogged;
+  lastLogged = null;
+  try {
+    await unlogLocationsOnly(undone);
+    stats = await loadLocationStats();
+    render();
+    showQuickMessage(`↩ Removed: ${escapeHtml(locationNames(undone))}`, false);
+  } catch (error) {
+    lastLogged = undone;
+    showQuickMessage(`<span class="error-text">Couldn't undo: ${escapeHtml(error.message)}</span>`, true);
+  }
+}
+
+
 // ---------- 4. START ----------
 render();   // show the list straight away, even before the numbers arrive
 
 watchUser(async function (user) {
+  quickBox.classList.toggle("hidden", !user);   // logging needs you to be signed in
   if (!user) {
     stats = null;
     render();

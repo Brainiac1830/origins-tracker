@@ -29,6 +29,19 @@
     <!-- Tournament announcement (filled by tools.js from locations.js) -->
     <div class="tournament-notice" id="tournament-notice"></div>
 
+    <!-- Log a PvE / playtest game: only its 3 locations go into the stats, no match is saved -->
+    <div class="quick-log" id="quick-log">
+      <div class="quick-log-title">
+        <b>Log a PvE game</b>
+        <span class="dim small">locations only · adds to the stats below without saving a match</span>
+      </div>
+      <div class="quick-log-row">
+        <div class="location-row quick-log-selects" id="quick-log-selects"></div>
+        <button type="button" class="btn quick-log-add" id="quick-log-add">Add</button>
+      </div>
+      <p class="quick-log-message" id="quick-log-message"></p>
+    </div>
+
     <!-- Search + sort -->
     <div class="tools-bar">
       <input type="search" id="location-search" class="text-input" placeholder="Search locations or text..." autocomplete="off">
