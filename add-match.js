@@ -248,8 +248,12 @@ function renderDeckChoices() {
   deckChoices.innerHTML = "";
 
   // Only complete decks can be played. Tournament decks first, then by name, newest version first.
+  // Archived decks are hidden, except the one used by the match you're editing.
   const playable = allDecks
-    .filter(isDeckComplete)
+    .filter(function (d) {
+      const isEditedDeck = editingMatch && d.id === editingMatch.deckId;
+      return isDeckComplete(d) && (!d.archived || isEditedDeck);
+    })
     .sort(function (a, b) {
       if (a.category !== b.category) {
         return a.category === "tournament" ? -1 : 1;

@@ -1734,6 +1734,31 @@ a.match-row {
   }
 }
 
+/* ----- My Decks: archived decks ----- */
+.archive-toggle {
+  flex-grow: 0;
+  white-space: nowrap;
+}
+
+.archive-toggle.active {          /* while the archived section is open */
+  background-color: var(--text-dim);
+  color: var(--background);
+}
+
+.tag-archived {
+  background-color: var(--text-dim);
+  color: var(--background);
+}
+
+.deck-tile.deck-archived {
+  opacity: 0.75;                  /* a little faded, so they look "put away" */
+  border-style: dashed;
+}
+
+.deck-tile.deck-archived:hover {
+  opacity: 1;
+}
+
 /* ---------- Big card view (modal) ---------- */
 
 /* The dark see-through layer covering the whole screen.

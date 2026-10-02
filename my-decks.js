@@ -1,7 +1,8 @@
 // ============================================================
 // my-decks.js — the My Decks page.
 // Shows tournament decks (top) and general decks (below), with buttons to
-// edit, make a new version, move between tournament/general, and delete.
+// edit, make a new version, move between tournament/general, archive and delete.
+// Archived decks are hidden until you click "Show archived".
 // ============================================================
 
 import { watchUser } from "./firebase.js";
@@ -15,9 +16,13 @@ const tournamentCount = document.getElementById("tournament-count");
 const verifyStatus    = document.getElementById("verify-status");
 const tournamentList  = document.getElementById("tournament-decks");
 const generalList     = document.getElementById("general-decks");
+const archiveToggle   = document.getElementById("archive-toggle");
+const archivedSection = document.getElementById("archived-section");
+const archivedList    = document.getElementById("archived-decks");
 
 let allDecks = [];   // every saved deck
 let allMatches = []; // every saved match (to know which decks have been played)
+let showArchived = false;   // is the "Archived decks" section open?
 
 
 // ---------- 2. LOAD AND DRAW ----------
@@ -53,7 +58,9 @@ function sortDecks(decks) {
 
 function render() {
   const tournament = sortDecks(allDecks.filter(function (d) { return d.category === "tournament"; }));
-  const general    = sortDecks(allDecks.filter(function (d) { return d.category !== "tournament"; }));
+  // General decks are split in two: normal ones, and archived ones (archived: true)
+  const general    = sortDecks(allDecks.filter(function (d) { return d.category !== "tournament" && !d.archived; }));
+  const archived   = sortDecks(allDecks.filter(function (d) { return d.category !== "tournament" && d.archived; }));
 
   tournamentCount.textContent = `(${tournament.length}/${MAX_TOURNAMENT_DECKS})`;
   lockNotice.classList.toggle("hidden", !isDeckLocked());
@@ -79,7 +86,27 @@ function render() {
   for (const deck of general) {
     generalList.appendChild(createDeckTile(deck, null));   // null = no rules check for general decks
   }
+
+  // ----- Archived decks (only drawn when the section is open) -----
+  archiveToggle.textContent = showArchived ? `Hide archived (${archived.length})` : `Show archived (${archived.length})`;
+  archiveToggle.classList.toggle("active", showArchived);
+  archivedSection.classList.toggle("hidden", !showArchived);
+  archivedList.innerHTML = "";
+  if (showArchived) {
+    if (archived.length === 0) {
+      archivedList.innerHTML = `<p class="empty-slot">No archived decks. Use "Archive" on a general deck to hide it here.</p>`;
+    }
+    for (const deck of archived) {
+      archivedList.appendChild(createDeckTile(deck, null));
+    }
+  }
 }
+
+// Open / close the archived section (no database reads: the decks are already loaded)
+archiveToggle.addEventListener("click", function () {
+  showArchived = !showArchived;
+  render();
+});
 
 // The message above the tournament decks
 function showVerifyStatus(check, count) {
@@ -116,6 +143,10 @@ function createDeckTile(deck, check) {
   tile.className = "deck-tile";
 
   const isTournament = deck.category === "tournament";
+  const isArchived   = !isTournament && deck.archived === true;
+  if (isArchived) {
+    tile.classList.add("deck-archived");
+  }
 
   // This deck's own result, if the rules were checked
   const result = check && check.ready ? check.results[deck.id] : null;
@@ -158,12 +189,26 @@ function createDeckTile(deck, check) {
     : `<b class="rate-text">${stats.rate}% win rate</b> · ${stats.wins}W ${stats.losses}L ${stats.ties}T (${stats.games} game${stats.games === 1 ? "" : "s"})`;
 
   const incompleteTag = isDeckComplete(deck) ? "" : `<span class="tag tag-warning">Incomplete</span>`;
+  const archivedTag   = isArchived ? `<span class="tag tag-archived">Archived</span>` : "";
+
+  // Archived decks get "Unarchive" instead of "Move to tournament".
+  // Normal general decks get an extra "Archive" button. Tournament decks can't be archived
+  // (move them to general first).
+  let middleButtons;
+  if (isArchived) {
+    middleButtons = `<button class="btn btn-small btn-outline" data-action="unarchive">Unarchive</button>`;
+  } else if (isTournament) {
+    middleButtons = `<button class="btn btn-small btn-outline" data-action="move">Move to general</button>`;
+  } else {
+    middleButtons = `<button class="btn btn-small btn-outline" data-action="move">Move to tournament</button>
+      <button class="btn btn-small btn-outline" data-action="archive">Archive</button>`;
+  }
 
   tile.innerHTML = `
     <div class="deck-tile-top">
       ${heroThumb}
       <div>
-        <div class="deck-tile-name">${escapeHtml(deck.name)} <span class="version">v${deck.version}</span></div>
+        <div class="deck-tile-name">${escapeHtml(deck.name)} <span class="version">v${deck.version}</span> ${archivedTag}</div>
         <div class="dim small">${hero ? hero.name : "No hero"} · ${deck.cards.length}/${MAX_CARDS} cards ${incompleteTag}</div>
       </div>
     </div>
@@ -173,7 +218,7 @@ function createDeckTile(deck, check) {
     <div class="deck-tile-buttons">
       <button class="btn btn-small" data-action="edit">Edit</button>
       <button class="btn btn-small" data-action="copy">New version</button>
-      <button class="btn btn-small btn-outline" data-action="move">${isTournament ? "Move to general" : "Move to tournament"}</button>
+      ${middleButtons}
       <button class="btn btn-small btn-danger" data-action="delete">Delete</button>
     </div>
   `;
@@ -203,12 +248,17 @@ function createDeckTile(deck, check) {
   const copyBtn   = tile.querySelector('[data-action="copy"]');
   const moveBtn   = tile.querySelector('[data-action="move"]');
   const deleteBtn = tile.querySelector('[data-action="delete"]');
+  const archiveBtn   = tile.querySelector('[data-action="archive"]');     // null if this tile has none
+  const unarchiveBtn = tile.querySelector('[data-action="unarchive"]');   // null if this tile has none
 
   // After deck lock: tournament decks can't be edited, moved or deleted,
   // and no general deck can be moved INTO the tournament either.
   // ("New version" always works: it makes a new general deck.)
   const lockedButtons = locked ? [editBtn, moveBtn, deleteBtn] : (isDeckLocked() ? [moveBtn] : []);
   for (const btn of lockedButtons) {
+    if (!btn) {
+      continue;      // archived tiles have no Move button
+    }
     btn.disabled = true;
     btn.title = "Deck lock has passed";
   }
@@ -228,13 +278,26 @@ function createDeckTile(deck, check) {
     location.href = "deck-builder.html?copy=" + deck.id;
   });
 
-  moveBtn.addEventListener("click", function () {
-    if (isTournament) {
-      moveDeck(deck, "general");
-    } else {
-      moveDeck(deck, "tournament");
-    }
-  });
+  if (moveBtn) {
+    moveBtn.addEventListener("click", function () {
+      if (isTournament) {
+        moveDeck(deck, "general");
+      } else {
+        moveDeck(deck, "tournament");
+      }
+    });
+  }
+
+  if (archiveBtn) {
+    archiveBtn.addEventListener("click", function () {
+      setArchived(deck, true);
+    });
+  }
+  if (unarchiveBtn) {
+    unarchiveBtn.addEventListener("click", function () {
+      setArchived(deck, false);
+    });
+  }
 
   deleteBtn.addEventListener("click", function () {
     removeDeck(deck);
@@ -271,12 +334,28 @@ async function moveDeck(deck, newCategory) {
   }
 }
 
+function isDeckArchivable(deck) {
+  return deck.category !== "tournament";
+}
+
+// Archive (hide) or unarchive (show again) a general deck.
+// Nothing is deleted: its cards, matches and win rate are all kept.
+async function setArchived(deck, archived) {
+  try {
+    await updateDeck(deck.id, { archived: archived });
+    await refresh();
+  } catch (error) {
+    alert("Couldn't change the deck: " + error.message);
+  }
+}
+
 async function removeDeck(deck) {
   const used = matchCount(deck.id);
   const warning = used > 0
     ? `\n\nIt was played in ${used} match${used === 1 ? "" : "es"}. Those matches will be kept, but won't count toward any deck's win rate.`
     : "";
-  if (!confirm(`Delete "${deckLabel(deck)}"? This can't be undone.${warning}`)) {
+  const tip = isDeckArchivable(deck) && !deck.archived ? `\n\nTip: "Archive" hides a deck without deleting it.` : "";
+  if (!confirm(`Delete "${deckLabel(deck)}"? This can't be undone.${warning}${tip}`)) {
     return;
   }
   try {
@@ -296,6 +375,7 @@ watchUser(function (user) {
     allDecks = [];
     tournamentList.innerHTML = "";
     generalList.innerHTML = "";
+    archivedList.innerHTML = "";
     tournamentCount.textContent = "";
     pageStatus.textContent = "Sign in (top menu) to see your decks.";
   }

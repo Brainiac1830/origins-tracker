@@ -41,8 +41,18 @@
 
     <div class="deck-list" id="tournament-decks"></div>
 
-    <h2 class="section-title">General decks</h2>
+    <!-- Title row: "General decks" on the left, "Show archived (2)" button on the right -->
+    <div class="title-row">
+      <h2 class="section-title">General decks</h2>
+      <button type="button" class="btn btn-small btn-outline archive-toggle" id="archive-toggle">Show archived</button>
+    </div>
     <div class="deck-list" id="general-decks"></div>
+
+    <!-- Archived decks: hidden until "Show archived" is clicked (my-decks.js) -->
+    <div class="hidden" id="archived-section">
+      <h2 class="section-title">Archived decks <span class="dim small">(hidden from Add Match · results kept)</span></h2>
+      <div class="deck-list" id="archived-decks"></div>
+    </div>
 
   </main>
 
