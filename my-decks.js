@@ -380,3 +380,43 @@ watchUser(function (user) {
     pageStatus.textContent = "Sign in (top menu) to see your decks.";
   }
 });
+
+
+// ---------- IMPORT A DECK CODE (from the game's Share button) ----------
+// The code is checked here, then the Deck Builder opens with the cards selected,
+// so you can name the deck and save it.
+const importToggle  = document.getElementById("import-toggle");
+const importBox     = document.getElementById("import-box");
+const importCode    = document.getElementById("import-code");
+const importGo      = document.getElementById("import-go");
+const importMessage = document.getElementById("import-message");
+
+importToggle.addEventListener("click", function () {
+  importBox.classList.toggle("hidden");
+  if (!importBox.classList.contains("hidden")) {
+    importCode.focus();
+  }
+});
+
+function importDeckCode() {
+  const code = importCode.value.trim();
+  const deck = decodeDeckCode(code);
+  importMessage.className = "import-message error";
+  if (!deck) {
+    importMessage.textContent = "That doesn't look like a deck code. Copy it again from Share in the game.";
+    return;
+  }
+  if (!deck.hero && deck.cards.length === 0) {
+    importMessage.textContent = "None of the cards in this code were recognised.";
+    return;
+  }
+  // encodeURIComponent makes the code safe to put in a web address
+  location.href = "deck-builder.html#import=" + encodeURIComponent(code);
+}
+
+importGo.addEventListener("click", importDeckCode);
+importCode.addEventListener("keydown", function (event) {
+  if (event.key === "Enter") {
+    importDeckCode();
+  }
+});

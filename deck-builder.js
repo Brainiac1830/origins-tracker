@@ -423,6 +423,25 @@ resetBtn.addEventListener("click", function () {
 
 
 // ---------- 11. START ----------
+
+// Opened from My Decks > Import deck code?  (deck-builder.html#import=CODE)
+// Select the code's hero and cards as a new deck: you name it and save it.
+if (location.hash.startsWith("#import=")) {
+  const imported = decodeDeckCode(decodeURIComponent(location.hash.slice("#import=".length)));
+  history.replaceState(null, "", location.pathname + location.search);   // tidy the address
+  if (imported) {
+    deckHero = imported.hero;
+    deckCards = imported.cards.slice(0, MAX_CARDS);
+    let note = "Deck imported from the game. Give it a name, then Save.";
+    if (imported.unknown.length > 0) {
+      note += ` ${imported.unknown.length} card(s) weren't recognised (${imported.unknown.join(", ")}): add them by hand.`;
+    }
+    showMessage(note);
+  } else {
+    showMessage("That deck code couldn't be read.");
+  }
+}
+
 updateScreen();
 updateButtons();
 

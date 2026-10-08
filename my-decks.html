@@ -33,7 +33,18 @@
     <!-- Title row: "Tournament decks (2/3)" on the left, "+ Build a deck" button on the right -->
     <div class="title-row">
       <h2 class="section-title">Tournament decks <span class="dim" id="tournament-count"></span></h2>
+      <button type="button" class="btn btn-outline build-deck-link" id="import-toggle">Import deck code</button>
       <a class="btn build-deck-link" href="deck-builder.html">+ Build a deck</a>
+    </div>
+
+    <!-- Paste a deck code from the game (Share deck): opens it in the Deck Builder -->
+    <div class="import-box hidden" id="import-box">
+      <p class="small dim">In the game, open your deck and click <b>Share</b>, then paste the code here.</p>
+      <div class="import-row">
+        <input type="text" class="text-input" id="import-code" placeholder="e.g. KGBLDCdjF8QzAwMDEy...:bebb17fd" autocomplete="off">
+        <button type="button" class="btn" id="import-go">Import</button>
+      </div>
+      <p class="import-message" id="import-message"></p>
     </div>
 
     <!-- "Add 3 decks to verify decks" / "All 3 decks are valid" / "1 deck needs changes" -->
@@ -60,6 +71,7 @@
   <script src="settings.js"></script>
   <script src="cards.js"></script>
   <script src="common.js"></script>
+  <script src="game-ids.js"></script>
   <script src="modal.js"></script>
   <script type="module" src="firebase.js"></script>
   <script type="module" src="my-decks.js"></script>

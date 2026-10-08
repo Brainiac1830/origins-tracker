@@ -1680,6 +1680,28 @@ a.match-row {
   white-space: nowrap;          /* keep "+ Build a deck" on one line */
 }
 
+/* ----- My Decks: "Import deck code" box ----- */
+.import-box {
+  background-color: var(--panel);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.import-box p {
+  margin: 0 0 8px 0;
+}
+.import-row {
+  display: flex;
+  gap: 8px;
+}
+.import-message {
+  color: var(--text-dim);
+  min-height: 1em;
+}
+.import-message.error {
+  color: #ff6b8b;
+}
+
 /* ----- Tools: "Log a PvE game" box ----- */
 .quick-log {
   background-color: var(--panel);
