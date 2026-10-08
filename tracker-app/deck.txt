@@ -1,0 +1,26 @@
+# ============================================================
+# Your deck for the overlay. Copy this file, rename the copy to  deck.txt
+# and put your deck in it. The overlay only appears when deck.txt exists.
+#
+# EASIEST: in the game, open your deck, click Share, and paste the code
+# on its own line (the hero counts 1 copy, every other card 2 copies):
+#
+#   name: Arthur Move
+#   KGBLDCdjF8QzAwMDEyX01DfEMwMDAzM19NQnxD...:bebb17fd
+#
+# OR type the cards yourself:
+#   name: ...        the deck's name (shown at the top)
+#   Dracula          one copy (put your hero like this)
+#   2 Asanbosam      two copies  (or:  Asanbosam x2)
+#
+# Card names are the same as on the website (capitals and spaces don't matter).
+# Anything after a # is ignored.
+# ============================================================
+name: Move
+KGBLDCdjF8QzAwMDEyX01DfEMwMDAzM19NQnxDMDAwNTJfTUJ8QzAwMDU0X01CfEMwMDA2MV9TQnxDMDAxMDBfTUJ8QzAwMTAxX01CfEMwMDEwMl9TQnxDMDAxMDNfTUJ8QzAwMTA4X1NCfEMwMDE0M19NQnxDMDAxNDdfTUJ8QzAwMjY5X01C:bebb17fd
+
+name : Koschei
+KGBLDCdjF8QzAwMDE4X01CfEMwMDAyOF9TQnxDMDAwMzBfTUJ8QzAwMDQ4X01CfEMwMDEwMl9TQnxDMDAxMTBfTUJ8QzAwMTE4X01DfEMwMDExOV9NQnxDMDAxMjJfTUJ8QzAwMTMyX01CfEMwMDE2OV9TQnxDMDAxODBfTUJ8QzAwMjYxX01C:24542bdb
+
+name : Good Van
+KGBLDCdjF8QzAwMDE4X01CfEMwMDA0N19NQnxDMDAwNjZfTUJ8QzAwMDczX01CfEMwMDEwMV9NQnxDMDAxMDNfTUJ8QzAwMTQzX01CfEMwMDE2Ml9TQnxDMDAxNzNfTUJ8QzAwMTk4X01CfEMwMDE5OV9NQnxDMDAyNjlfTUJ8QzAwMzE0X01D:1b619dcb

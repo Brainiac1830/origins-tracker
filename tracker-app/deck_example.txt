@@ -1,0 +1,37 @@
+# ============================================================
+# Your deck for the overlay. Copy this file, rename the copy to  deck.txt
+# and put your deck in it. The overlay only appears when deck.txt exists.
+#
+# EASIEST: in the game, open your deck, click Share, and paste the code
+# on its own line (the hero counts 1 copy, every other card 2 copies):
+#
+#   name: Arthur Move
+#   KGBLDCdjF8QzAwMDEyX01DfEMwMDAzM19NQnxD...:bebb17fd
+#
+# OR type the cards yourself:
+#   name: ...        the deck's name (shown at the top)
+#   Dracula          one copy (put your hero like this)
+#   2 Asanbosam      two copies  (or:  Asanbosam x2)
+#
+# SEVERAL DECKS: put them one after the other, each starting with its own name: line.
+# The overlay switches to the deck that uses the hero you're playing (seen on the
+# matchup screen). Two decks with the same hero? It picks the one that best fits
+# your starting hand.
+#
+# Card names are the same as on the website (capitals and spaces don't matter).
+# Anything after a # is ignored.
+# ============================================================
+name: Vamp Control
+Dracula
+2 Golden Egg
+2 Trash for Treasure
+2 Asanbosam
+2 Shield Maiden
+2 Quasimodo
+2 Jack
+2 En Passant
+2 Dark Omen
+2 Captain Ahab
+2 Boitata
+2 Koschei
+2 Ugly Duckling

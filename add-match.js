@@ -2,6 +2,7 @@
 // add-match.js — the Add Match page (and Edit Match).
 //   add-match.html            -> log a new match
 //   add-match.html?edit=ID    -> change a saved match
+//   add-match.html#import=... -> a match filled in by the deck tracker (tracker-app)
 // ============================================================
 
 import { watchUser } from "./firebase.js";
@@ -19,6 +20,7 @@ let pickedCards = [];           // ids of the cards you selected as "they played
 let costFilter = "all";         // which mana cost button is active
 
 const editId = new URLSearchParams(location.search).get("edit");
+let trackerId = null;           // set when the form was filled in by the deck tracker
 
 
 // ---------- 2. FIND THE PARTS OF THE PAGE ----------
@@ -345,6 +347,87 @@ function resetForm() {
 }
 
 
+// ---------- 8b. FILLED IN BY THE DECK TRACKER ----------
+// After each game, the tracker (tracker-app/watch.py) opens  add-match.html#import=CODE
+// CODE is the match written as JSON text, then "base64" (only letters and numbers,
+// so it can travel inside a link). Nothing is saved until you click Save.
+
+function readTrackerMatch() {
+  if (!location.hash.startsWith("#import=")) {
+    return null;
+  }
+  try {
+    // base64 for links uses - and _ ; the browser's decoder wants + and / (and = at the end)
+    let code = location.hash.slice("#import=".length).replace(/-/g, "+").replace(/_/g, "/");
+    while (code.length % 4 !== 0) {
+      code += "=";
+    }
+    const bytes = Uint8Array.from(atob(code), function (c) { return c.charCodeAt(0); });
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch (error) {
+    console.error("Couldn't read the tracker's match:", error);
+    return null;
+  }
+}
+
+const trackerMatch = readTrackerMatch();
+
+// Your deck that best fits what the tracker saw: same hero, most cards in common.
+function findTrackerDeck(data) {
+  const candidates = allDecks.filter(function (d) {
+    return isDeckComplete(d) && !d.archived && (!data.myHero || d.hero === data.myHero);
+  });
+  let best = null;
+  let bestScore = -1;
+  for (const deck of candidates) {
+    const score = deck.cards.filter(function (id) { return data.deckCards.includes(id); }).length;
+    // More cards in common wins; on a tie, the newer version
+    if (score > bestScore || (score === bestScore && deck.version > best.version)) {
+      best = deck;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
+function fillFromTracker(data) {
+  // Saved already? (each tracker match has its own id)
+  if (allMatches.some(function (m) { return m.trackerId === data.id; })) {
+    pageStatus.textContent = "This match from the deck tracker is already saved.";
+    return;
+  }
+
+  const deck = findTrackerDeck(data);
+  if (deck) {
+    setChecked("deck", deck.id);
+  }
+
+  // Opponent: use the spelling you used before, if you've played them already
+  const known = allMatches.find(function (m) {
+    return m.opponent.toLowerCase() === (data.opponent || "").toLowerCase();
+  });
+  opponentInput.value = known ? known.opponent : (data.opponent || "");
+
+  setChecked("enemy-hero", data.enemyHero);
+  setChecked("result", data.result);
+
+  for (let i = 0; i < LOCATION_COUNT; i++) {
+    locationSelects[i].value = data.locations[i] || "";
+  }
+  updateLocationOptions();
+
+  pickedCards = data.enemyCards
+    .filter(function (id) { return pickTiles[id]; })      // only cards the picker knows
+    .slice(0, MAX_ENEMY_CARDS);
+  renderPicked();
+
+  trackerId = data.id;
+  document.getElementById("section-difficulty").classList.add("missing");   // the one thing left to pick
+  pageStatus.innerHTML = "Filled in by the <b>deck tracker</b>. Check everything, pick the difficulty, then click Save." +
+    (deck ? "" : " (Your deck wasn't recognised: pick it below.)");
+}
+
+
 // ---------- 9. SAVING ----------
 async function saveMatch() {
   const deckId     = checkedValue("deck");
@@ -404,7 +487,15 @@ async function saveMatch() {
     }
 
     match.playedAt = Date.now();                   // when you played = now
+    if (trackerId) {
+      match.trackerId = trackerId;                 // so the same tracker match can't be saved twice
+    }
     await createMatch(match);
+    match.trackerId = trackerId;
+    if (trackerId) {
+      trackerId = null;
+      history.replaceState(null, "", location.pathname);   // remove #import=... from the address
+    }
 
     // Remember the deck for next time you open this page (only in this browser)
     try { localStorage.setItem("last-deck", deckId); } catch (e) { /* not important */ }
@@ -483,6 +574,10 @@ watchUser(async function (user) {
     try { lastDeck = localStorage.getItem("last-deck"); } catch (e) { /* not important */ }
     if (lastDeck) {
       setChecked("deck", lastDeck);
+    }
+    if (trackerMatch && !trackerMatch.used) {
+      trackerMatch.used = true;                    // (only once, even if you sign out and in)
+      fillFromTracker(trackerMatch);
     }
   }
 
