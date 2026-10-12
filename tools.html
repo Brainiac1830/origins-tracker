@@ -24,23 +24,26 @@
   </nav>
 
   <main>
+    <!-- Link the deck tracker (tracker-app) so its overlay can save matches by itself -->
+    <h2 class="section-title">Deck tracker</h2>
+    <div class="import-box hidden" id="tracker-link">
+      <p class="small dim">Lets the deck tracker's overlay save matches straight to your account, with its <b>Save</b> button.
+        Create a key, then paste it into <b>tracker-app/tracker_key.txt</b> on your computer.</p>
+      <p class="small dim">The key works like a password for your decks and matches on this site (not your Google account):
+        keep it private and never put it on GitHub. Signing out on this page doesn't cancel it.</p>
+      <div class="import-row">
+        <input type="text" class="text-input" id="tracker-key" readonly placeholder="Click Create key">
+        <button type="button" class="btn" id="tracker-key-create">Create key</button>
+        <button type="button" class="btn btn-outline hidden" id="tracker-key-copy">Copy</button>
+      </div>
+      <p class="import-message" id="tracker-key-message"></p>
+    </div>
+    <p class="small dim" id="tracker-link-signin">Sign in to link the deck tracker.</p>
+
     <h2 class="section-title">Locations</h2>
 
     <!-- Tournament announcement (filled by tools.js from locations.js) -->
     <div class="tournament-notice" id="tournament-notice"></div>
-
-    <!-- Log a PvE / playtest game: only its 3 locations go into the stats, no match is saved -->
-    <div class="quick-log" id="quick-log">
-      <div class="quick-log-title">
-        <b>Log a PvE game</b>
-        <span class="dim small">locations only · adds to the stats below without saving a match</span>
-      </div>
-      <div class="quick-log-row">
-        <div class="location-row quick-log-selects" id="quick-log-selects"></div>
-        <button type="button" class="btn quick-log-add" id="quick-log-add">Add</button>
-      </div>
-      <p class="quick-log-message" id="quick-log-message"></p>
-    </div>
 
     <!-- Search + sort -->
     <div class="tools-bar">
@@ -64,22 +67,6 @@
 
     <!-- One card per location (filled by tools.js) -->
     <div class="location-grid" id="location-grid"></div>
-
-    <!-- Link the deck tracker (tracker-app) so its overlay can save matches by itself -->
-    <h2 class="section-title">Deck tracker</h2>
-    <div class="import-box hidden" id="tracker-link">
-      <p class="small dim">Lets the deck tracker's overlay save matches straight to your account, with its <b>Save</b> button.
-        Create a key, then paste it into <b>tracker-app/tracker_key.txt</b> on your computer.</p>
-      <p class="small dim">The key works like a password for your decks and matches on this site (not your Google account):
-        keep it private and never put it on GitHub. Signing out on this page doesn't cancel it.</p>
-      <div class="import-row">
-        <input type="text" class="text-input" id="tracker-key" readonly placeholder="Click Create key">
-        <button type="button" class="btn" id="tracker-key-create">Create key</button>
-        <button type="button" class="btn btn-outline hidden" id="tracker-key-copy">Copy</button>
-      </div>
-      <p class="import-message" id="tracker-key-message"></p>
-    </div>
-    <p class="small dim" id="tracker-link-signin">Sign in to link the deck tracker.</p>
   </main>
 
   <!-- Normal scripts first, then the modules -->

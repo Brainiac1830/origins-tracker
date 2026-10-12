@@ -1694,6 +1694,9 @@ a.match-row {
   display: flex;
   gap: 8px;
 }
+.import-row .btn {
+  white-space: nowrap;          /* keep "Create key" on one line */
+}
 .import-message {
   color: var(--text-dim);
   min-height: 1em;
