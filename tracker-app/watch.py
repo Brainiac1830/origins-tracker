@@ -46,6 +46,8 @@ MONITOR = 1          # 1 = your main screen. Try 2 if the game is on a second sc
 
 # After each Victory/Defeat, open your website's Add Match page with the match filled in
 # (you check it, pick the difficulty and click Save). False = don't open it.
+# Once the tracker is linked (tracker_key.txt, see website.py) the overlay's Save button
+# is used instead and the website isn't opened.
 OPEN_ADD_MATCH = True
 SITE_URL = "https://brainiac1830.github.io/origins-tracker/"
 
@@ -526,9 +528,11 @@ LOCATION_TITLES = [(0.150, 0.403, 0.372, 0.433), (0.392, 0.403, 0.612, 0.433),
 GAME_MY_NAME = (0.068, 0.925, 0.25, 0.962)         # bottom left
 
 
-def read_text(screen, box):
+def read_text(screen, box, grey_too=False):
     """Reads white text in a box with Windows' built-in text reader (the 'winocr'
-    package). Returns the text, or None if winocr isn't installed or nothing was read."""
+    package). Returns the text, or None if winocr isn't installed or nothing was read.
+    grey_too: if there are hardly any white letters (e.g. a greyed-out location name),
+    separate the letters from the background automatically instead."""
     try:
         from winocr import recognize_cv2_sync
         read = lambda picture: recognize_cv2_sync(picture, "en")["text"]
@@ -546,6 +550,10 @@ def read_text(screen, box):
         letters = (hsv[:, :, 2] > 190) & (hsv[:, :, 1] < 60)
         clean = np.full(piece.shape, 255, np.uint8)
         clean[letters] = 0
+        if grey_too and letters.mean() < 0.01:
+            # Grey letters: "Otsu" picks the brightness that best splits letters from background
+            grey = cv2.cvtColor(piece, cv2.COLOR_BGR2GRAY)
+            _, clean = cv2.threshold(grey, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         clean = cv2.copyMakeBorder(clean, 40, 40, 40, 40, cv2.BORDER_CONSTANT, value=(255, 255, 255))
         return read(clean)
     except Exception:
@@ -578,7 +586,7 @@ def read_location(screen, box, locations):
     """Reads one lane's location name and finds it in locations.js.
     Returns the location, or None ("Reveals on Round 2", unreadable, unknown...)."""
     import difflib
-    text = read_text(screen, box)
+    text = read_text(screen, box, grey_too=True)
     if not text:
         return None
     text = re.sub(r"[^a-z ]", "", text.lower()).strip()
@@ -673,11 +681,23 @@ def cut_slot(screen, slot):
     return screen[int(top * h):int(bottom * h), int(left * w):int(right * w)]
 
 
-def take_screenshot(grabber, overlay=None):
+def watched_boxes():
+    """Every part of the screen the tracker reads (except the combat arrow, see below)."""
+    hand = (HAND_STRIP[0], HAND_STRIP[1], HAND_STRIP[2], HAND_BOTTOM)
+    return ([POPUP, BUTTON, hand, GAME_ENEMY_NAME, GAME_MY_NAME, MATCH_MY_HERO, MATCH_ENEMY_HERO,
+             MATCH_MY_NAME, MATCH_ENEMY_NAME] + LOCATION_TITLES + [slot["box"] for slot in SLOTS])
+
+
+def take_screenshot(grabber, overlay=None, also=None):
     """One screenshot of the chosen screen, as an OpenCV picture.
-    If the overlay can't be hidden from screenshots on this PC, it's made
-    see-through for a split second while the screenshot is taken."""
+    If the overlay can't be hidden from screenshots on this PC AND it sits on top of
+    something the tracker reads, it's made see-through for a split second while the
+    screenshot is taken. also = extra boxes to keep clear this time (the combat arrow)."""
     blink = overlay is not None and overlay.get("blink") and overlay.get("hwnd")
+    if blink:
+        import overlay as overlay_module
+        boxes = watched_boxes() + (also or [])
+        blink = overlay_module.covers(overlay["hwnd"], boxes, grabber.monitors[MONITOR])
     if blink:
         import overlay as overlay_module
         overlay_module.set_alpha(overlay["hwnd"], 0)
@@ -865,6 +885,8 @@ def watch(library, stop=None, overlay=None):
             overlay["enemy"] = Counter()
             overlay["enemy_spells"] = Counter()
             overlay["enemy_tokens"] = Counter()
+            overlay["match"] = {}
+            overlay["manual"] = {"opponent": None, "locations": {}}   # corrections typed in the overlay
         stats["from_hand"] = Counter()      # your cards played/cast from your hand
 
     def pick_deck(hand=None):
@@ -946,6 +968,25 @@ def watch(library, stop=None, overlay=None):
                 count_play(i, held[i], "revealed", screen)
                 round_info["mine"][held[i]["name"]] += 1
 
+    def corrected():
+        """Corrections typed in the overlay's Match panel ({} without the overlay)."""
+        return (overlay.get("manual") or {}) if overlay is not None else {}
+
+    def final_opponent():
+        return corrected().get("opponent") or stats["enemy_name"] or ""
+
+    def final_locations():
+        """lane -> location: your correction if you made one, else what was read."""
+        chosen = dict(stats["locations"])
+        chosen.update(corrected().get("locations") or {})
+        return chosen
+
+    def show_match_info():
+        """Keeps the overlay's Match panel up to date with what's been read."""
+        if overlay is not None:
+            overlay["match"] = {"opponent": stats.get("enemy_name"), "hero": stats.get("enemy_hero"),
+                                "locations": {lane: loc["name"] for lane, loc in stats.get("locations", {}).items()}}
+
     def send_to_website(result):
         """Opens the website's Add Match page with this match filled in. The match
         travels inside the link (after #import=), so nothing else is needed."""
@@ -974,16 +1015,40 @@ def watch(library, stop=None, overlay=None):
         deck = overlay.get("deck") if overlay is not None else None
         match = {
             "v": 1,
-            "id": f"{time.strftime('%Y%m%d-%H%M%S')}-{stats['enemy_name'] or 'x'}",  # (stops saving it twice)
+            "id": f"{time.strftime('%Y%m%d-%H%M%S')}-{final_opponent() or 'x'}",  # (stops saving it twice)
             "result": result,
-            "opponent": stats["enemy_name"] or "",
+            "opponent": final_opponent(),
             "myHero": card_id(stats["my_hero"]) if stats["my_hero"] else None,
             "enemyHero": card_id(stats["enemy_hero"]) if stats["enemy_hero"] else None,
             "deckName": deck["name"] if deck else None,
             "deckCards": [c["id"] for c, n in deck["cards"]] if deck else [],
-            "locations": [stats["locations"][lane]["id"] for lane in (1, 2, 3) if lane in stats["locations"]],
+            "locations": [final_locations()[lane]["id"] for lane in (1, 2, 3) if lane in final_locations()],
             "enemyCards": enemy_cards[:12],
+            "difficulty": corrected().get("difficulty"),
         }
+        linked = False
+        try:
+            import website
+            linked = website.is_linked()
+        except Exception:
+            pass
+
+        if overlay is not None:
+            # The overlay shows this game (with Save / Website buttons) until it's saved or closed
+            overlay["pending"] = {
+                "title": "VICTORY" if result == "win" else "DEFEAT", "info": match, "linked": linked,
+                "detected": {"opponent": stats["enemy_name"], "hero": stats["enemy_hero"],
+                             "locations": dict(stats["locations"])},
+                "manual": {"opponent": corrected().get("opponent"),
+                           "locations": dict(corrected().get("locations") or {}),
+                           "difficulty": corrected().get("difficulty")},
+                "status": None,
+            }
+            if linked:
+                diary.write("  → Check the overlay, pick the difficulty and press Save.")
+                return
+        if not OPEN_ADD_MATCH:
+            return
         code = base64.urlsafe_b64encode(json.dumps(match).encode("utf-8")).decode("ascii").rstrip("=")
         link = SITE_URL.rstrip("/") + "/add-match.html#import=" + code
         try:
@@ -1016,10 +1081,15 @@ def watch(library, stop=None, overlay=None):
                     diary.write(f"     {line}")
             else:
                 diary.write("  ✓ Nothing uncertain this match.")
-            if stats["locations"]:
-                diary.write("  Locations   : " + ", ".join(stats["locations"][lane]["name"]
-                                                       for lane in sorted(stats["locations"])))
-            if OPEN_ADD_MATCH and title in ("VICTORY", "DEFEAT"):
+            if final_locations():
+                diary.write("  Locations   : " + ", ".join(final_locations()[lane]["name"]
+                                                       for lane in sorted(final_locations())))
+            if corrected().get("opponent") or corrected().get("locations"):
+                diary.write("  (corrected by you in the overlay: "
+                            + ", ".join(([f"opponent = {corrected()['opponent']}"] if corrected().get("opponent") else [])
+                                        + [f"L{lane} = {loc['name']}" for lane, loc in sorted((corrected().get("locations") or {}).items())])
+                            + ")")
+            if title in ("VICTORY", "DEFEAT"):
                 send_to_website("win" if title == "VICTORY" else "loss")
             diary.write("")
             state["match"] += 1
@@ -1101,8 +1171,22 @@ def watch(library, stop=None, overlay=None):
                 diary.write(f"{tag()}--- Reveal ---")
                 commit_your_placements(screen)
             elif phase == "combat":
-                direction = read_direction(screen, pictures)
-                extra = "   *** REVERSED (Wonderland?) ***" if direction == "right to left" else ""
+                # Wonderland is the location that reverses combat. Once the location names
+                # are known, that says the direction without needing to see the arrow.
+                known = [loc["id"] for loc in final_locations().values()]
+                arrow_hidden = False
+                if overlay is not None and overlay.get("blink") and overlay.get("hwnd"):
+                    import overlay as overlay_module
+                    arrow_hidden = overlay_module.covers(overlay["hwnd"], [ARROW], grabber.monitors[MONITOR])
+                if "wonderland" in known:
+                    direction = "right to left"
+                elif len(known) == 3:
+                    direction = "left to right"
+                else:
+                    if arrow_hidden:
+                        screen = take_screenshot(grabber, overlay, also=[ARROW])   # one quick blink
+                    direction = read_direction(screen, pictures)
+                extra = "   *** REVERSED (Wonderland) ***" if direction == "right to left" else ""
                 diary.write(f"{tag()}--- Combat ({direction or 'direction unknown'}) ---{extra}")
                 commit_your_placements(screen)
             elif phase == "planning":
@@ -1138,6 +1222,7 @@ def watch(library, stop=None, overlay=None):
 
                 # ----- 0. Which phase are we in? -----
                 update_phase(screen)
+                show_match_info()
 
                 # Before the first round (the "STARTING HAND" screen) and after Victory/Defeat
                 # the big cards and letters sit over the board slots: don't read the board then.
@@ -1177,11 +1262,11 @@ def watch(library, stop=None, overlay=None):
                         diary.write(f"Players: You = {stats['my_name'] or '?'}, opponent = {stats['enemy_name'] or '?'}")
 
                 # ----- 0c. The 3 location names (until all 3 are known, every few seconds) -----
-                if len(stats["locations"]) < 3 and time.time() - state.get("location_try", 0) >= 3:
+                if len(final_locations()) < 3 and time.time() - state.get("location_try", 0) >= 3:
                     state["location_try"] = time.time()
                     blocking = big_cards(screen)
                     for lane, box in enumerate(LOCATION_TITLES, start=1):
-                        if lane in stats["locations"] or covered(box, blocking, amount=0.5):
+                        if lane in final_locations() or covered(box, blocking, amount=0.5):
                             continue
                         found = read_location(screen, box, locations)
                         if found:
@@ -1550,6 +1635,8 @@ def start_with_overlay(cards, library):
     from collections import Counter
     shared = {"deck": decks[0], "decks": decks, "drawn": Counter(), "enemy": Counter(),
               "enemy_spells": Counter(), "enemy_tokens": Counter(), "status": "starting...",
+              "match": {}, "manual": {"opponent": None, "locations": {}}, "locations_list": load_locations(),
+              "pending": None,
               "hwnd": None, "blink": None}
     stop = threading.Event()
     watcher = threading.Thread(target=watch, args=(library, stop, shared))

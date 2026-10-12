@@ -372,6 +372,14 @@ function readTrackerMatch() {
 
 const trackerMatch = readTrackerMatch();
 
+// A new tracker link opened in a tab that already shows this page only changes the
+// part after # (the page doesn't reload by itself): reload it so the match is read.
+window.addEventListener("hashchange", function () {
+  if (location.hash.startsWith("#import=")) {
+    location.reload();
+  }
+});
+
 // Your deck that best fits what the tracker saw: same hero, most cards in common.
 function findTrackerDeck(data) {
   const candidates = allDecks.filter(function (d) {
@@ -422,8 +430,12 @@ function fillFromTracker(data) {
   renderPicked();
 
   trackerId = data.id;
-  document.getElementById("section-difficulty").classList.add("missing");   // the one thing left to pick
-  pageStatus.innerHTML = "Filled in by the <b>deck tracker</b>. Check everything, pick the difficulty, then click Save." +
+  if (data.difficulty) {
+    setChecked("difficulty", data.difficulty);   // picked on the tracker's overlay
+  } else {
+    document.getElementById("section-difficulty").classList.add("missing");   // the one thing left to pick
+  }
+  pageStatus.innerHTML = "Filled in by the <b>deck tracker</b>. Check everything" + (data.difficulty ? "" : ", pick the difficulty") + ", then click Save." +
     (deck ? "" : " (Your deck wasn't recognised: pick it below.)");
 }
 
@@ -577,7 +589,12 @@ watchUser(async function (user) {
     }
     if (trackerMatch && !trackerMatch.used) {
       trackerMatch.used = true;                    // (only once, even if you sign out and in)
-      fillFromTracker(trackerMatch);
+      try {
+        fillFromTracker(trackerMatch);
+      } catch (error) {
+        pageStatus.textContent = "Couldn't fill in the tracker's match: " + error.message;
+        console.error(error);
+      }
     }
   }
 

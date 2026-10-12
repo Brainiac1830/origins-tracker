@@ -7,7 +7,7 @@
 // Each game has 3 locations, so all the percentages add up to about 300%.
 // ============================================================
 
-import { watchUser } from "./firebase.js";
+import { watchUser, auth } from "./firebase.js";
 import { loadLocationStats, logLocationsOnly, unlogLocationsOnly } from "./database.js";
 
 
@@ -244,4 +244,42 @@ watchUser(async function (user) {
     return;
   }
   render();
+});
+
+
+// ---------- LINK THE DECK TRACKER ----------
+// The key holds your account id and a "refresh token" (what keeps you signed in).
+// The tracker (tracker-app/website.py) uses it to save matches as you.
+const trackerLink   = document.getElementById("tracker-link");
+const trackerSignin = document.getElementById("tracker-link-signin");
+const trackerKey    = document.getElementById("tracker-key");
+const trackerCreate = document.getElementById("tracker-key-create");
+const trackerCopy   = document.getElementById("tracker-key-copy");
+const trackerMsg    = document.getElementById("tracker-key-message");
+
+watchUser(function (user) {
+  trackerLink.classList.toggle("hidden", !user);
+  trackerSignin.classList.toggle("hidden", !!user);
+});
+
+trackerCreate.addEventListener("click", function () {
+  const user = auth.currentUser;
+  if (!user) {
+    return;
+  }
+  const key = { v: 1, uid: user.uid, email: user.email, refreshToken: user.refreshToken };
+  trackerKey.value = btoa(JSON.stringify(key));      // btoa = turn the text into base64 letters
+  trackerCopy.classList.remove("hidden");
+  trackerMsg.className = "import-message";
+  trackerMsg.textContent = "Copy it into tracker-app/tracker_key.txt, then run:  python website.py  to check it works.";
+});
+
+trackerCopy.addEventListener("click", async function () {
+  try {
+    await navigator.clipboard.writeText(trackerKey.value);
+    trackerMsg.textContent = "Copied! Paste it into tracker-app/tracker_key.txt and save the file.";
+  } catch (error) {
+    trackerKey.select();                              // copying blocked: select it so Ctrl+C works
+    trackerMsg.textContent = "Press Ctrl+C to copy it.";
+  }
 });

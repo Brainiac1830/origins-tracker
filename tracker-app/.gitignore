@@ -3,3 +3,6 @@ snap.png
 check.png
 __pycache__/
 games/
+
+# Your login key for the website (made on Tools > Link the deck tracker). NEVER upload it.
+tracker_key.txt

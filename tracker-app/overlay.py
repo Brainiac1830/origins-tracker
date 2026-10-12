@@ -16,6 +16,8 @@ import base64
 import io
 import os
 import re
+import threading
+import time
 from collections import Counter
 
 import cv2
@@ -237,23 +239,79 @@ def star(d, cx, cy, r, fill):
     d.polygon(points, fill=fill)
 
 
-def render(deck, drawn, enemy, status, website, enemy_spells=None, enemy_tokens=None, warning=None):
+# Where the clickable "Match" lines are drawn: name -> (top, bottom) in pixels.
+# Filled in by render(), used by the window to know what was clicked.
+CLICK_ZONES = {}         # name -> (left, top, right, bottom)
+LINE = 17                # height of one line of the Match panel
+DIFFICULTIES = [("easy", "Easy"), ("medium", "Medium"), ("hard", "Hard")]
+
+
+def panel_height(pending):
+    """Match panel: opponent, 3 locations, difficulty (+ a title and buttons after a game)."""
+    return LINE * (5 + (2 if pending else 0)) + 6
+
+
+def final_info(pending):
+    """The finished game's info with your corrections applied (what Save sends)."""
+    info = dict(pending["info"])
+    manual, seen = pending.get("manual") or {}, pending.get("detected") or {}
+    info["opponent"] = manual.get("opponent") or seen.get("opponent") or ""
+    locations = dict(seen.get("locations") or {})
+    locations.update(manual.get("locations") or {})
+    info["locations"] = [locations[lane]["id"] for lane in (1, 2, 3) if lane in locations]
+    info["difficulty"] = manual.get("difficulty")
+    return info
+
+
+def match_lines(match, manual):
+    """The Match panel's 4 lines: (zone, label, text, colour).
+    Corrected values (manual) are gold, read values white, unknown ones dim."""
+    match, manual = match or {}, manual or {}
+    lines = []
+    if manual.get("opponent"):
+        text, colour = manual["opponent"], GOLD
+    elif match.get("opponent"):
+        text, colour = match["opponent"], TEXT
+    else:
+        text, colour = "? (click to type it)", DIM
+    hero = match.get("hero")
+    lines.append(("opponent", "vs", text + (f"  ·  {hero}" if hero and colour != DIM else ""), colour))
+    for lane in (1, 2, 3):
+        chosen = (manual.get("locations") or {}).get(lane)
+        seen = (match.get("locations") or {}).get(lane)
+        if isinstance(seen, dict):
+            seen = seen["name"]
+        if chosen:
+            text, colour = chosen["name"], GOLD
+        elif seen:
+            text, colour = seen, TEXT
+        else:
+            text, colour = "? (click to pick)", DIM
+        lines.append((f"loc{lane}", f"L{lane}", text, colour))
+    return lines
+
+
+def render(deck, drawn, enemy, status, website, enemy_spells=None, enemy_tokens=None, warning=None,
+           match=None, manual=None, pending=None):
     """Draws the whole overlay. drawn = Counter of card names you've drawn,
     enemy / enemy_spells / enemy_tokens = Counters of what the opponent played,
-    cast and summoned. Returns a Pillow image."""
+    cast and summoned. match / manual = the Match panel (read / corrected values).
+    Returns a Pillow image."""
     enemy_spells = enemy_spells or Counter()
     enemy_tokens = enemy_tokens or Counter()
     rows = sorted(deck["cards"], key=lambda cc: (int(cc[0].get("cost") or 0), cc[0]["name"]))
     total = sum(n for c, n in rows)
     left_total = sum(max(0, n - drawn[c["name"]]) for c, n in rows)
 
-    def lines(counter):
-        return sorted(counter.items(), key=lambda kv: (-kv[1], kv[0]))
-    groups = [(None, lines(enemy), TEXT), ("Spells cast", lines(enemy_spells), LILAC),
-              ("Summoned (tokens)", lines(enemy_tokens), DIM)]
-    groups = [g for g in groups if g[1]]
-    enemy_height = sum((18 if title else 0) + (len(items) + 1) // 2 * 18 + 4 for title, items, c in groups)
-    height = 58 + len(rows) * (ROW + 2) + 34 + max(18, enemy_height) + 30 + (18 if warning else 0)
+    # One list: units in white, spells in lilac (tokens aren't shown), most played first
+    items = [(name, n, TEXT) for name, n in enemy.items()] + \
+            [(name, n, LILAC) for name, n in enemy_spells.items()]
+    items.sort(key=lambda item: (-item[1], item[0]))
+    enemy_height = (len(items) + 1) // 2 * 18 + 4
+    if pending:                      # after a game: show that game until it's saved or closed
+        match, manual = pending.get("detected"), pending.get("manual")
+    match_height = panel_height(pending)
+    height = 58 + match_height + len(rows) * (ROW + 2) + 34 + max(18, enemy_height) + 30 + (18 if warning else 0)
     img = Image.new("RGB", (WIDTH, height), BG)
     d = ImageDraw.Draw(img)
     big, mid, small = font(15), font(13), font(11)
@@ -266,7 +324,58 @@ def render(deck, drawn, enemy, status, website, enemy_spells=None, enemy_tokens=
     d.text((8, 32), f"In deck: {left_total}/{total}", font=mid, fill=GREEN)
     d.text((WIDTH - 8 - d.textlength(status, font=small), 34), status, font=small, fill=DIM)
 
+    # The Match panel: opponent, locations, difficulty (click to correct / choose)
     y = 54
+    CLICK_ZONES.clear()
+    d.rectangle([4, y - 2, WIDTH - 4, y + match_height - 6], fill=(30, 22, 48))
+    if pending:
+        won = pending.get("title") == "VICTORY"
+        d.text((10, y), ("Last game: VICTORY" if won else "Last game: DEFEAT"), font=small, fill=GREEN if won else RED)
+        d.text((WIDTH - 44, y), "close", font=small, fill=DIM)
+        CLICK_ZONES["dismiss"] = (WIDTH - 70, y - 2, WIDTH - 4, y + LINE - 2)
+        y += LINE
+    for zone, label, text, colour in match_lines(match, manual):
+        d.text((10, y), label, font=small, fill=RED if zone == "opponent" else MANA)
+        shown = text
+        if d.textlength(shown, font=small) > WIDTH - 50:
+            while d.textlength(shown + "…", font=small) > WIDTH - 50 and len(shown) > 4:
+                shown = shown[:-1]                       # shorten to fit the line
+            shown = shown.rstrip() + "…"
+        d.text((34, y), shown, font=small, fill=colour)
+        CLICK_ZONES[zone] = (0, y - 2, WIDTH, y + LINE - 2)
+        y += LINE
+    # Difficulty: three small buttons
+    d.text((10, y), "Diff", font=small, fill=DIM)
+    chosen = (manual or {}).get("difficulty")
+    x = 44
+    for value, word in DIFFICULTIES:
+        w = d.textlength(word, font=small) + 12
+        on = chosen == value
+        d.rounded_rectangle([x, y - 1, x + w, y + 14], radius=4, fill=GOLD if on else PANEL)
+        d.text((x + 6, y), word, font=small, fill=(20, 14, 32) if on else TEXT)
+        CLICK_ZONES["diff-" + value] = (x, y - 2, x + w, y + LINE - 2)
+        x += w + 6
+    y += LINE
+    if pending:
+        # Buttons: Save (needs the tracker key) and Website (opens the filled-in Add Match page)
+        x = 10
+        buttons = (["save"] if pending.get("linked") else []) + ["website"]
+        for name in buttons:
+            word = "Save" if name == "save" else "Website"
+            w = d.textlength(word, font=small) + 16
+            d.rounded_rectangle([x, y - 1, x + w, y + 14], radius=4, fill=GREEN if name == "save" else PANEL)
+            d.text((x + 8, y), word, font=small, fill=(20, 14, 32) if name == "save" else TEXT)
+            CLICK_ZONES[name] = (x, y - 2, x + w, y + LINE - 2)
+            x += w + 6
+        note = pending.get("status") or ("" if (manual or {}).get("difficulty") else "pick the difficulty")
+        if d.textlength(note, font=small) > WIDTH - x - 8:
+            while note and d.textlength(note + "…", font=small) > WIDTH - x - 8:
+                note = note[:-1]
+            note = note.rstrip() + "…"
+        d.text((x + 2, y), note, font=small, fill=GOLD if "✓" in note else DIM)
+        y += LINE
+    y = 54 + match_height
+
     for card, copies in rows:
         left = max(0, copies - drawn[card["name"]])
         gone = left == 0
@@ -304,21 +413,17 @@ def render(deck, drawn, enemy, status, website, enemy_spells=None, enemy_tokens=
     d.rectangle([0, y, WIDTH, y + 22], fill=PANEL)
     d.text((8, y + 4), "Opponent played", font=mid, fill=RED)
     y += 28
-    if not groups:
+    if not items:
         d.text((8, y), "nothing yet", font=small, fill=DIM)
-    for title, items, colour in groups:
-        if title:
-            d.text((8, y), title, font=small, fill=colour)
-            y += 18
-        for k, (name, n) in enumerate(items):
-            x = 8 if k % 2 == 0 else WIDTH // 2 + 2
-            count = f" x{n}" if n > 1 else ""
-            label, short = name + count, name
-            while d.textlength(label, font=small) > WIDTH // 2 - 12 and len(short) > 3:
-                short = short[:-1]                       # shorten long names to fit the column
-                label = short.rstrip() + "…" + count
-            d.text((x, y + (k // 2) * 18), label, font=small, fill=TEXT if colour == DIM else colour)
-        y += (len(items) + 1) // 2 * 18 + 4
+    for k, (name, n, colour) in enumerate(items):
+        x = 8 if k % 2 == 0 else WIDTH // 2 + 2
+        count = f" x{n}" if n > 1 else ""
+        label, short = name + count, name
+        while d.textlength(label, font=small) > WIDTH // 2 - 12 and len(short) > 3:
+            short = short[:-1]                       # shorten long names to fit the column
+            label = short.rstrip() + "…" + count
+        d.text((x, y + (k // 2) * 18), label, font=small, fill=colour)
+    y += (len(items) + 1) // 2 * 18 + 4
     if warning:
         d.text((8, height - 36), warning, font=small, fill=GOLD)
     if deck.get("unknown"):
@@ -347,7 +452,7 @@ def run_window(state, stop, website, refresh_ms=400):
 
     # Start on the right side of the screen, under the top bar
     screen_w = root.winfo_screenwidth()
-    root.geometry(f"+{screen_w - WIDTH - 12}+{90}")
+    root.geometry(f"+{screen_w - WIDTH - 4}+{90}")   # right edge, clear of the board
 
     # Hide the overlay from screen captures (Windows 10 2004+), so the tracker's
     # screenshots still show the game underneath it. watch.py then checks that it
@@ -382,20 +487,154 @@ def run_window(state, stop, website, refresh_ms=400):
             print(f"(Couldn't hide the overlay from screenshots: {error})")
     root.after(300, hide_from_capture)
 
-    # Drag it anywhere with the mouse; click the ✕ (top right) to close
-    drag = {"x": 0, "y": 0}
+    # Drag it anywhere with the mouse; click the ✕ (top right) to close;
+    # click a line of the Match panel (without dragging) to correct it
+    drag = {"x": 0, "y": 0, "moved": False}
+    manual = state.setdefault("manual", {"opponent": None, "locations": {}})
 
     def press(event):
         if event.y < 26 and event.x > WIDTH - 28:
             stop.set()
             return
-        drag["x"], drag["y"] = event.x, event.y
+        drag["x"], drag["y"], drag["moved"] = event.x, event.y, False
 
     def move(event):
+        if abs(event.x - drag["x"]) + abs(event.y - drag["y"]) > 3:
+            drag["moved"] = True
         root.geometry(f"+{root.winfo_x() + event.x - drag['x']}+{root.winfo_y() + event.y - drag['y']}")
+
+    def release(event):
+        if drag["moved"]:
+            return
+        for zone, (left, top, right, bottom) in list(CLICK_ZONES.items()):
+            if left <= event.x <= right and top <= event.y <= bottom:
+                clicked(zone)
+                return
+
+    def current_manual():
+        """Corrections go to the finished game while it's shown, otherwise to the live game."""
+        pending = state.get("pending")
+        target = pending if pending else state
+        return target.setdefault("manual", {"opponent": None, "locations": {}})
+
+    def clicked(zone):
+        pending = state.get("pending")
+        if zone.startswith("diff-"):
+            value = zone[5:]
+            manual_now = current_manual()
+            manual_now["difficulty"] = None if manual_now.get("difficulty") == value else value
+        elif zone == "dismiss":
+            state["pending"] = None
+        elif zone == "website" and pending:
+            import webbrowser
+            import website as site
+            webbrowser.open(site.add_match_link(final_info(pending)))
+        elif zone == "save" and pending:
+            save_pending(pending)
+        else:
+            open_editor(zone)
+
+    def save_pending(pending):
+        """Saves the finished game to the website (in the background, so the overlay
+        doesn't freeze while it talks to the internet)."""
+        if pending.get("saving"):
+            return
+        if not (pending.get("manual") or {}).get("difficulty"):
+            pending["status"] = "pick the difficulty first"
+            return
+        pending["saving"], pending["status"] = True, "saving..."
+
+        def work():
+            import website as site
+            try:
+                deck = site.save_match(final_info(pending))
+                pending["status"] = f"saved ✓ ({deck.get('name')})"
+                pending["close_at"] = time.time() + 4        # then the panel goes back to live
+            except Exception as error:
+                pending["status"] = f"not saved: {error}"
+                print(f"(Overlay Save: {error})")
+            pending["saving"] = False
+        threading.Thread(target=work, daemon=True).start()
 
     label.bind("<Button-1>", press)
     label.bind("<B1-Motion>", move)
+    label.bind("<ButtonRelease-1>", release)
+
+    editor = {"window": None}
+
+    def open_editor(zone):
+        """A small window to type the opponent's name or pick a location."""
+        if editor["window"] is not None:
+            editor["window"].destroy()
+        win = tk.Toplevel(root)
+        editor["window"] = win
+        win.attributes("-topmost", True)
+        win.configure(bg="#180f28", padx=10, pady=8)
+        win.geometry(f"+{max(0, root.winfo_x() - 270)}+{root.winfo_y() + 40}")
+        style = {"bg": "#180f28", "fg": "white"}
+        manual = current_manual()
+
+        def close():
+            editor["window"] = None
+            win.destroy()
+
+        if zone == "opponent":
+            win.title("Opponent's name")
+            tk.Label(win, text="Opponent's name:", **style).pack(anchor="w")
+            entry = tk.Entry(win, width=28)
+            seen = (state.get("pending") or {}).get("detected") or state.get("match") or {}
+            entry.insert(0, manual.get("opponent") or seen.get("opponent") or "")
+            entry.pack(pady=4)
+            entry.focus_force()
+            entry.select_range(0, "end")
+
+            def save(event=None):
+                manual["opponent"] = entry.get().strip() or None
+                close()
+            entry.bind("<Return>", save)
+            row = tk.Frame(win, bg="#180f28")
+            row.pack(fill="x")
+            tk.Button(row, text="Save", command=save).pack(side="left")
+            tk.Button(row, text="Use what the tracker read",
+                      command=lambda: (manual.update(opponent=None), close())).pack(side="left", padx=6)
+        else:
+            lane = int(zone[-1])
+            win.title(f"Location {lane}")
+            tk.Label(win, text=f"Location {lane} (lane {lane}) - type to search:", **style).pack(anchor="w")
+            search = tk.Entry(win, width=30)
+            search.pack(pady=4)
+            search.focus_force()
+            box = tk.Listbox(win, height=10, width=32, exportselection=False)
+            box.pack()
+            everything = sorted(state.get("locations_list") or [], key=lambda loc: loc["name"])
+            shown = []
+
+            def fill(event=None):
+                text = search.get().strip().lower()
+                shown[:] = [loc for loc in everything if text in loc["name"].lower()]
+                box.delete(0, "end")
+                for loc in shown:
+                    box.insert("end", loc["name"])
+                if shown:
+                    box.selection_set(0)
+
+            def pick(event=None):
+                chosen = box.curselection()
+                if shown and chosen:
+                    manual.setdefault("locations", {})[lane] = shown[chosen[0]]
+                close()
+            search.bind("<KeyRelease>", fill)
+            search.bind("<Return>", pick)
+            box.bind("<Double-Button-1>", pick)
+            box.bind("<Return>", pick)
+            row = tk.Frame(win, bg="#180f28")
+            row.pack(fill="x", pady=(6, 0))
+            tk.Button(row, text="Pick", command=pick).pack(side="left")
+            tk.Button(row, text="Use what the tracker read",
+                      command=lambda: ((manual.get("locations") or {}).pop(lane, None), close())).pack(side="left", padx=6)
+            fill()
+        win.bind("<Escape>", lambda event: close())
+        win.protocol("WM_DELETE_WINDOW", close)
 
     shown = {"key": None, "photo": None}
 
@@ -407,15 +646,20 @@ def run_window(state, stop, website, refresh_ms=400):
             key = (tuple(sorted(dict(state["drawn"]).items())), tuple(sorted(dict(state["enemy"]).items())),
                    tuple(sorted(dict(state.get("enemy_spells") or {}).items())),
                    tuple(sorted(dict(state.get("enemy_tokens") or {}).items())),
-                   state["status"], id(state["deck"]), state.get("warning"))
+                   state["status"], id(state["deck"]), state.get("warning"),
+                   repr(state.get("match")), repr(state.get("manual")), repr(state.get("pending")))
             deck = state["deck"]
+            match, manual_now = dict(state.get("match") or {}), dict(state.get("manual") or {})
+            pending = state.get("pending")
+            if pending and pending.get("close_at") and time.time() > pending["close_at"]:
+                state["pending"] = pending = None            # saved: back to the live game
         except RuntimeError:
             root.after(50, refresh)
             return
         if key != shown["key"]:
             shown["key"] = key
             picture = render(deck, Counter(dict(key[0])), Counter(dict(key[1])), key[4], website,
-                             Counter(dict(key[2])), Counter(dict(key[3])), key[6])
+                             Counter(dict(key[2])), Counter(dict(key[3])), key[6], match, manual_now, pending)
             data = io.BytesIO()
             picture.save(data, "PNG")
             shown["photo"] = tk.PhotoImage(data=base64.b64encode(data.getvalue()))
@@ -473,3 +717,19 @@ def seen_by_capture(hwnd, grabber):
     finally:
         set_alpha(hwnd, ALPHA)
     return float(np.abs(normal - hidden).mean()) > 12
+
+
+def covers(hwnd, boxes, monitor):
+    """True if the overlay sits on top of any of these boxes (fractions of the
+    screen; monitor = {left, top, width, height} of the game's screen)."""
+    box = window_box(hwnd)
+    if box is None:
+        return False
+    ox1, oy1 = box["left"] - monitor["left"], box["top"] - monitor["top"]
+    ox2, oy2 = ox1 + box["width"], oy1 + box["height"]
+    for (l, t, r, b) in boxes:
+        x1, y1, x2, y2 = l * monitor["width"], t * monitor["height"], r * monitor["width"], b * monitor["height"]
+        overlap = max(0, min(ox2, x2) - max(ox1, x1)) * max(0, min(oy2, y2) - max(oy1, y1))
+        if overlap > 0.05 * (x2 - x1) * (y2 - y1):
+            return True
+    return False
