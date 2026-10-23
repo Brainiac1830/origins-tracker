@@ -16,7 +16,8 @@ const countdowns = [
     id: "deck-lock",
     title: "Deck lock",
     date: DECK_LOCK,
-    finishedText: "Decks are locked!"
+    // With the lock switched off (settings.js), say so instead of "locked"
+    finishedText: DECK_LOCK_ON ? "Decks are locked!" : "Deck lock is off: decks can be changed."
   },
   {
     id: "tournament-start",

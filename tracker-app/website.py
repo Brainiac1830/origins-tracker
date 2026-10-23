@@ -195,6 +195,8 @@ def save_match(info):
        {"id", "result", "difficulty", "opponent", "myHero", "enemyHero",
         "deckCards", "locations", "enemyCards"}
     Returns the deck it was saved with. Raises an error (with a readable message) if not."""
+    if info.get("result") not in ("win", "loss", "tie"):
+        raise RuntimeError("Pick the result first.")
     if not info.get("difficulty"):
         raise RuntimeError("Pick the difficulty first.")
     if not info.get("enemyHero"):

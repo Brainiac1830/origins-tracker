@@ -244,11 +244,12 @@ def star(d, cx, cy, r, fill):
 CLICK_ZONES = {}         # name -> (left, top, right, bottom)
 LINE = 17                # height of one line of the Match panel
 DIFFICULTIES = [("easy", "Easy"), ("medium", "Medium"), ("hard", "Hard")]
+RESULTS = [("win", "Win"), ("loss", "Loss"), ("tie", "Tie")]
 
 
 def panel_height(pending):
-    """Match panel: opponent, 3 locations, difficulty (+ a title and buttons after a game)."""
-    return LINE * (5 + (2 if pending else 0)) + 6
+    """Match panel: opponent, 3 locations, difficulty, result (+ a title and buttons after a game)."""
+    return LINE * (6 + (2 if pending else 0)) + 6
 
 
 def final_info(pending):
@@ -260,6 +261,7 @@ def final_info(pending):
     locations.update(manual.get("locations") or {})
     info["locations"] = [locations[lane]["id"] for lane in (1, 2, 3) if lane in locations]
     info["difficulty"] = manual.get("difficulty")
+    info["result"] = manual.get("result") or info.get("result")
     return info
 
 
@@ -329,8 +331,10 @@ def render(deck, drawn, enemy, status, website, enemy_spells=None, enemy_tokens=
     CLICK_ZONES.clear()
     d.rectangle([4, y - 2, WIDTH - 4, y + match_height - 6], fill=(30, 22, 48))
     if pending:
-        won = pending.get("title") == "VICTORY"
-        d.text((10, y), ("Last game: VICTORY" if won else "Last game: DEFEAT"), font=small, fill=GREEN if won else RED)
+        result_now = (manual or {}).get("result") or pending["info"].get("result")
+        title = {"win": "Last game: VICTORY", "loss": "Last game: DEFEAT", "tie": "Last game: TIE"}.get(
+            result_now, "Last game: result not seen")
+        d.text((10, y), title, font=small, fill={"win": GREEN, "loss": RED}.get(result_now, GOLD))
         d.text((WIDTH - 44, y), "close", font=small, fill=DIM)
         CLICK_ZONES["dismiss"] = (WIDTH - 70, y - 2, WIDTH - 4, y + LINE - 2)
         y += LINE
@@ -356,6 +360,25 @@ def render(deck, drawn, enemy, status, website, enemy_spells=None, enemy_tokens=
         CLICK_ZONES["diff-" + value] = (x, y - 2, x + w, y + LINE - 2)
         x += w + 6
     y += LINE
+    # Result: during a game these END it (when the Victory/Defeat screen isn't recognised);
+    # after a game they correct the result
+    d.text((10, y), "Result", font=small, fill=DIM)
+    picked = None
+    if pending:
+        picked = (manual or {}).get("result") or pending["info"].get("result")
+    x = 54
+    for value, word in RESULTS:
+        w = d.textlength(word, font=small) + 12
+        on = picked == value
+        colour = {"win": GREEN, "loss": RED, "tie": GOLD}[value]
+        d.rounded_rectangle([x, y - 1, x + w, y + 14], radius=4, fill=colour if on else PANEL,
+                            outline=None if on else colour)
+        d.text((x + 6, y), word, font=small, fill=(20, 14, 32) if on else TEXT)
+        CLICK_ZONES[("res-" if pending else "end-") + value] = (x, y - 2, x + w, y + LINE - 2)
+        x += w + 6
+    if not pending:
+        d.text((x + 2, y), "ends game", font=small, fill=DIM)
+    y += LINE
     if pending:
         # Buttons: Save (needs the tracker key) and Website (opens the filled-in Add Match page)
         x = 10
@@ -367,7 +390,9 @@ def render(deck, drawn, enemy, status, website, enemy_spells=None, enemy_tokens=
             d.text((x + 8, y), word, font=small, fill=(20, 14, 32) if name == "save" else TEXT)
             CLICK_ZONES[name] = (x, y - 2, x + w, y + LINE - 2)
             x += w + 6
-        note = pending.get("status") or ("" if (manual or {}).get("difficulty") else "pick the difficulty")
+        note = pending.get("status") or (
+            "pick the result" if not ((manual or {}).get("result") or pending["info"].get("result"))
+            else "" if (manual or {}).get("difficulty") else "pick the difficulty")
         if d.textlength(note, font=small) > WIDTH - x - 8:
             while note and d.textlength(note + "…", font=small) > WIDTH - x - 8:
                 note = note[:-1]
@@ -523,6 +548,10 @@ def run_window(state, stop, website, refresh_ms=400):
             value = zone[5:]
             manual_now = current_manual()
             manual_now["difficulty"] = None if manual_now.get("difficulty") == value else value
+        elif zone.startswith("end-"):
+            state["end_request"] = zone[4:]        # the tracker ends the game with this result
+        elif zone.startswith("res-"):
+            current_manual()["result"] = zone[4:]
         elif zone == "dismiss":
             state["pending"] = None
         elif zone == "website" and pending:
@@ -538,6 +567,9 @@ def run_window(state, stop, website, refresh_ms=400):
         """Saves the finished game to the website (in the background, so the overlay
         doesn't freeze while it talks to the internet)."""
         if pending.get("saving"):
+            return
+        if not final_info(pending).get("result"):
+            pending["status"] = "pick the result first"
             return
         if not (pending.get("manual") or {}).get("difficulty"):
             pending["status"] = "pick the difficulty first"

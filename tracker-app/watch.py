@@ -23,6 +23,8 @@
 #     py watch.py                  watch the game live (Ctrl+C to stop)
 #     py watch.py --snap           take ONE screenshot after 5 seconds and check it
 #     py watch.py --test file.png  check a screenshot you already have
+#     py watch.py --end-ref victory file.jpg   make the VICTORY reference picture
+#     py watch.py --end-ref defeat  file.jpg   ...or the DEFEAT one (from an end-screen screenshot)
 #
 # --snap and --test save "check.png" with the 18 boxes drawn on it,
 # so you can see whether the boxes sit on the slots.
@@ -236,6 +238,25 @@ def load_phase_pictures():
     return pictures
 
 
+def read_end_word(screen, pictures, needed):
+    """ "victory", "defeat" or None, from the giant word of the end screen.
+    Several pictures per word are allowed: end_victory.png, end_victory_old.png, ...
+    (so the end screens from before AND after a game update are both recognised)."""
+    word = end_word_mask(screen)
+    if (word > 128).mean() < 0.05:
+        return None                                # no big white word at all
+    scores = {}
+    for name, picture in pictures.items():
+        if name.startswith("end_"):
+            which = name.split("_")[1]             # "end_victory_old" -> "victory"
+            scores[which] = max(scores.get(which, 0.0), similarity(word, picture))
+    if scores:
+        best = max(scores, key=scores.get)
+        if scores[best] > needed:
+            return best
+    return None
+
+
 def read_phase(screen, pictures):
     """Returns (phase, round number or None). Phase is one of:
     planning, revealing, combat, between, defeat, victory, unknown."""
@@ -244,17 +265,15 @@ def read_phase(screen, pictures):
     if (teal > 0).mean() > 0.6:
         # Teal button bottom right: the end screen... or the finishing animation (SKIP).
         # Only the giant word tells them apart.
-        word = end_word_mask(screen)
-        scores = {name[4:]: similarity(word, p) for name, p in pictures.items() if name.startswith("end_")}
-        if scores:
-            best = max(scores, key=scores.get)
-            if scores[best] > 0.6:
-                return best, None            # "victory" or "defeat"
-        return "between", None
+        result = read_end_word(screen, pictures, 0.6)
+        return (result or "between"), None
 
     word = phase_word_mask(screen)
     if (word > 128).mean() < 0.01:
-        return "between", None                     # empty button
+        # Empty round button. If a game update changed the NEXT button, the giant
+        # word alone can still say it's the end screen (stricter, to be safe).
+        result = read_end_word(screen, pictures, 0.75)
+        return (result or "between"), None
     best, best_score = None, 0.0
     for name, picture in pictures.items():
         if name.startswith("word_"):
@@ -521,11 +540,13 @@ MATCH_ENEMY_HERO = (928 / REF_W, 798 / REF_H, 1078 / REF_W, 1018 / REF_H)
 MATCH_MY_NAME = (80 / REF_W, 945 / REF_H, 420 / REF_W, 992 / REF_H)
 MATCH_ENEMY_NAME = (1330 / REF_W, 945 / REF_H, 1640 / REF_W, 992 / REF_H)
 # During the match both names are also shown in a plain, easy-to-read font:
-GAME_ENEMY_NAME = (0.068, 0.012, 0.25, 0.048)      # top left
+# (the boxes include the coloured title line under the name: Windows OCR reads a
+#  short name much better with some text around it; we keep only the top line)
+GAME_ENEMY_NAME = (0.068, 0.008, 0.25, 0.075)      # top left
 # The location names: the white title line of each lane's banner (lane 1, 2, 3)
 LOCATION_TITLES = [(0.150, 0.403, 0.372, 0.433), (0.392, 0.403, 0.612, 0.433),
                    (0.633, 0.403, 0.853, 0.433)]
-GAME_MY_NAME = (0.068, 0.925, 0.25, 0.962)         # bottom left
+GAME_MY_NAME = (0.068, 0.921, 0.25, 0.988)         # bottom left
 
 
 def read_text(screen, box, grey_too=False):
@@ -561,12 +582,40 @@ def read_text(screen, box, grey_too=False):
 
 
 def read_name(screen, box):
-    """Reads a player name. Returns None if nothing could be read."""
-    text = read_text(screen, box)
-    if not text:
+    """Reads a player name (the top line of the box). Returns None if unsure.
+    Windows OCR sometimes misreads a short name (DOPSIN -> "OOPSIN"), so the box is
+    read 3 slightly different ways and at least 2 must agree."""
+    try:
+        from winocr import recognize_cv2_sync
+    except Exception:
         return None
-    text = re.sub(r"[^A-Za-z0-9 _-]", "", text).strip().upper()   # only letters, numbers, spaces
-    return text if len(text) >= 2 else None
+    piece = cut(screen, box)
+    bigger = lambda picture, times: cv2.resize(picture, None, fx=times, fy=times, interpolation=cv2.INTER_CUBIC)
+    inverted = cv2.cvtColor(255 - cv2.cvtColor(piece, cv2.COLOR_BGR2GRAY), cv2.COLOR_GRAY2BGR)
+    # (picture, how many times bigger, border colour). Enlarged reads much better.
+    tries = [(bigger(piece, 2), 2, (0, 0, 0)),
+             (bigger(piece, 3), 3, (0, 0, 0)),
+             (bigger(inverted, 2), 2, (255, 255, 255))]       # dark letters on light
+    readings = []
+    for picture, times, border in tries:
+        try:
+            picture = cv2.copyMakeBorder(picture, 30, 30, 30, 30, cv2.BORDER_CONSTANT, value=border)
+            lines = recognize_cv2_sync(picture, "en")["lines"]
+        except Exception:
+            continue
+        # The name is in the top part of the box; lower down is the title ("Fresh Out of the Pack")
+        lines = [line for line in lines if line["words"]
+                 and (line["words"][0]["bounding_rect"]["y"] - 30) / times < 0.45 * piece.shape[0]]
+        if not lines:
+            continue
+        top = min(lines, key=lambda line: line["words"][0]["bounding_rect"]["y"])
+        text = re.sub(r"[^A-Za-z0-9 _-]", "", top["text"]).strip().upper()   # letters, numbers, spaces
+        if len(text) >= 2:
+            readings.append(text)
+    if not readings:
+        return None
+    best = max(set(readings), key=readings.count)
+    return best if readings.count(best) >= 2 else None
 
 
 def load_locations():
@@ -685,7 +734,7 @@ def watched_boxes():
     """Every part of the screen the tracker reads (except the combat arrow, see below)."""
     hand = (HAND_STRIP[0], HAND_STRIP[1], HAND_STRIP[2], HAND_BOTTOM)
     return ([POPUP, BUTTON, hand, GAME_ENEMY_NAME, GAME_MY_NAME, MATCH_MY_HERO, MATCH_ENEMY_HERO,
-             MATCH_MY_NAME, MATCH_ENEMY_NAME] + LOCATION_TITLES + [slot["box"] for slot in SLOTS])
+             MATCH_MY_NAME, MATCH_ENEMY_NAME, END_WORD, END_NEXT] + LOCATION_TITLES + [slot["box"] for slot in SLOTS])
 
 
 def take_screenshot(grabber, overlay=None, also=None):
@@ -1036,7 +1085,8 @@ def watch(library, stop=None, overlay=None):
         if overlay is not None:
             # The overlay shows this game (with Save / Website buttons) until it's saved or closed
             overlay["pending"] = {
-                "title": "VICTORY" if result == "win" else "DEFEAT", "info": match, "linked": linked,
+                "title": {"win": "VICTORY", "loss": "DEFEAT", "tie": "TIE"}.get(result, "?"), "info": match,
+                "linked": linked,
                 "detected": {"opponent": stats["enemy_name"], "hero": stats["enemy_hero"],
                              "locations": dict(stats["locations"])},
                 "manual": {"opponent": corrected().get("opponent"),
@@ -1089,8 +1139,10 @@ def watch(library, stop=None, overlay=None):
                             + ", ".join(([f"opponent = {corrected()['opponent']}"] if corrected().get("opponent") else [])
                                         + [f"L{lane} = {loc['name']}" for lane, loc in sorted((corrected().get("locations") or {}).items())])
                             + ")")
-            if title in ("VICTORY", "DEFEAT"):
-                send_to_website("win" if title == "VICTORY" else "loss")
+            if title in ("VICTORY", "DEFEAT", "TIE"):
+                send_to_website({"VICTORY": "win", "DEFEAT": "loss", "TIE": "tie"}[title])
+            elif title.startswith("NEW MATCH") and overlay is not None:
+                send_to_website(None)      # result not seen: pick it on the overlay
             diary.write("")
             state["match"] += 1
         checks.clear()
@@ -1103,6 +1155,25 @@ def watch(library, stop=None, overlay=None):
         state["round"] = None
         hand_now, hand_candidate, hand_streak, last_hand_tiny = [], None, 0, None
 
+    def save_possible_end_screen(screen, phase):
+        """During a match, the round button normally comes back within a few seconds.
+        If it stays missing for 8+ seconds, we're probably on an end screen the tracker
+        doesn't recognise (e.g. after a game update). Save it (at most 3 per match), so
+        it can become the new reference with:  python watch.py --end-ref victory <file>"""
+        if phase not in ("between", "unknown") or not state["round"] \
+                or state["phase"] in ("defeat", "victory"):
+            state["no_button_since"] = None
+            return
+        now = time.time()
+        if state.get("no_button_since") is None:
+            state["no_button_since"] = now
+        if (now - state["no_button_since"] >= 8 and stats.get("end_shots", 0) < 3
+                and now - stats.get("last_end_shot", 0) >= 5):
+            stats["end_shots"] = stats.get("end_shots", 0) + 1
+            stats["last_end_shot"] = now
+            diary.write(f"{tag()}(No round button for a while: maybe an end screen the tracker "
+                        f"doesn't know yet. Screenshot saved.)", screen, None, "possible-end-screen")
+
     def update_phase(screen):
         """Reads the round button and reacts when the phase changes."""
         if not pictures:
@@ -1113,6 +1184,7 @@ def watch(library, stop=None, overlay=None):
             state["phase_streak"] += 1
         else:
             state["phase_candidate"], state["phase_streak"] = phase, 1
+        save_possible_end_screen(screen, phase)
         if state["phase_streak"] < 2 or phase in ("between", "unknown"):
             return                                   # not sure yet, or nothing to learn
 
@@ -1216,6 +1288,16 @@ def watch(library, stop=None, overlay=None):
                 if overlay is not None and overlay.get("hwnd") and overlay.get("blink") is None:
                     check_overlay_visibility(grabber)
                 screen = take_screenshot(grabber, overlay)
+                # Win / Loss / Tie pressed on the overlay: end the game now (for when the
+                # Victory/Defeat screen isn't recognised, e.g. after a game update)
+                request = overlay.pop("end_request", None) if overlay is not None else None
+                if request:
+                    title = {"win": "VICTORY", "loss": "DEFEAT", "tie": "TIE"}[request]
+                    if any(stats["plays"][s] or stats["spells"][s] for s in ("Enemy", "You")):
+                        diary.write(f"{tag()}(Result set by you on the overlay: {title})")
+                        end_match(title, screen)
+                    else:
+                        print("          (Result pressed, but nothing was tracked this game yet.)")
                 if overlay is not None:
                     phase = state["phase"] or "waiting for a match"
                     overlay["status"] = (f"Round {state['round']} · {phase}" if state["round"] else phase)
@@ -1249,17 +1331,28 @@ def watch(library, stop=None, overlay=None):
                     time.sleep(SCAN_EVERY)
                     continue
 
-                # ----- 0b. Player names, in the plain font shown during the match (once) -----
-                if not stats.get("names_read") and state["phase"] == "planning":
-                    stats["names_read"] = True
+                # ----- 0b. Player names, in the plain font shown during the match -----
+                # Read every 3 seconds until the same name was read 3 times (a vote:
+                # one bad screenshot, e.g. during an animation, can't spoil it).
+                if (not stats.get("names_done") and state["phase"] in ("planning", "revealing", "combat")
+                        and time.time() - state.get("name_try", 0) >= 3):
+                    state["name_try"] = time.time()
+                    votes = stats.setdefault("name_votes", {"enemy": Counter(), "me": Counter()})
                     enemy_name = read_name(screen, GAME_ENEMY_NAME)
                     my_name = MY_NAME or read_name(screen, GAME_MY_NAME)
                     if enemy_name:
-                        stats["enemy_name"] = enemy_name
+                        votes["enemy"][enemy_name] += 1
                     if my_name:
-                        stats["my_name"] = my_name
-                    if enemy_name or my_name:
-                        diary.write(f"Players: You = {stats['my_name'] or '?'}, opponent = {stats['enemy_name'] or '?'}")
+                        votes["me"][my_name] += 1
+                    for who_, key in (("enemy", "enemy_name"), ("me", "my_name")):
+                        if votes[who_]:
+                            stats[key] = votes[who_].most_common(1)[0][0]   # the most-read name so far
+                    stats["name_tries"] = stats.get("name_tries", 0) + 1
+                    sure = votes["enemy"] and votes["enemy"].most_common(1)[0][1] >= 3
+                    if sure or stats["name_tries"] >= 20:           # give up after about a minute
+                        stats["names_done"] = True
+                        diary.write(f"Players: You = {stats['my_name'] or '?'}, opponent = {stats['enemy_name'] or '?'}"
+                                    + ("" if sure else "  (opponent name not sure)"))
 
                 # ----- 0c. The 3 location names (until all 3 are known, every few seconds) -----
                 if len(final_locations()) < 3 and time.time() - state.get("location_try", 0) >= 3:
@@ -1573,7 +1666,38 @@ def describe(counts, plays):
 
 # ---------- 7. START ----------
 
+def make_end_reference(which, path):
+    """Saves the giant end-screen word of a screenshot as phases/end_<which>.png."""
+    if which not in ("victory", "defeat"):
+        print('Say "victory" or "defeat", e.g.:  python watch.py --end-ref victory the-end-screen.jpg')
+        return
+    screen = cv2.imread(path)
+    if screen is None:
+        print("Couldn't open that picture:", path)
+        return
+    word = end_word_mask(screen)
+    if (word > 128).mean() < 0.05:
+        print("Hmm, there's almost no big white word in that picture. Is it really the end screen?")
+        return
+    target = os.path.join(PHASES_DIR, f"end_{which}.png")
+    if os.path.exists(target):                       # keep the old one, just in case
+        os.replace(target, os.path.join(PHASES_DIR, f"end_{which}_old.png"))
+    cv2.imwrite(target, word)
+    print(f"Saved {target}")
+    other = os.path.join(PHASES_DIR, f"end_{'defeat' if which == 'victory' else 'victory'}.png")
+    if os.path.exists(other):
+        score = similarity(word, cv2.imread(other, cv2.IMREAD_GRAYSCALE))
+        print(f"Likeness to the other end word: {score:.2f} (must stay under 0.6 to tell them apart)")
+    teal = colour_mask(cut(screen, END_NEXT), (80, 120, 150), (95, 255, 255), blur=0)
+    print(f"Teal NEXT button found: {'yes' if (teal > 0).mean() > 0.6 else 'NO (the button check needs fixing too)'}")
+
+
 def main():
+    # --end-ref victory|defeat file.jpg: turn an end-screen screenshot into the reference
+    # picture the tracker compares with (needed after a game update changes the end screen).
+    if len(sys.argv) >= 4 and sys.argv[1] == "--end-ref":
+        make_end_reference(sys.argv[2].lower(), sys.argv[3])
+        return
     cards = load_cards()
     print(f"Found {len(cards)} cards in cards.js. Learning the card pictures (about 10 seconds)...")
     library = build_library(cards)
