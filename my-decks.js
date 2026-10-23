@@ -168,7 +168,11 @@ function createDeckTile(deck, check) {
   // ----- The line under the name: "✓ Valid" or the list of problems -----
   let checkHtml = "";
   if (result && result.valid) {
-    checkHtml = `<div class="deck-check ok">✓ Valid · ${result.uniqueCount} unique cards</div>`;
+    // e.g. "✓ Valid · in common: 3 with Deck B, 4 with Deck C"
+    const pairs = Object.entries(result.sharedWith)          // like Python's dict.items()
+      .map(function ([name, count]) { return `${count} with ${escapeHtml(name)}`; })
+      .join(", ");
+    checkHtml = `<div class="deck-check ok">✓ Valid · in common: ${pairs}</div>`;
   } else if (result) {
     // One line per problem. escapeHtml because problems contain deck names you typed.
     const lines = result.problems.map(function (p) { return `<li>${escapeHtml(p)}</li>`; }).join("");

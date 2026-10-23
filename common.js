@@ -49,7 +49,8 @@ function isDeckComplete(deck) {
 // Rules for the 3 tournament decks:
 //   - each deck is complete (1 hero + 12 cards)
 //   - each deck has a different hero
-//   - each deck has at least 8 cards that are NOT in either of the other 2 decks
+//   - any 2 decks have at most 4 cards in common (MAX_SHARED_CARDS, checked per pair:
+//     3 in common with deck A and 4 with deck B is fine)
 //
 // Gives back:
 //   { ready: false }                     -> there aren't 3 tournament decks yet
@@ -58,7 +59,7 @@ function isDeckComplete(deck) {
 //         valid: false,
 //         problems: ["Hero Dracula is also used in Deck C."],
 //         shared: { "bullseye": ["Deck C"] },   // card id -> the other decks that have it
-//         uniqueCount: 9
+//         sharedWith: { "Deck B": 3, "Deck C": 1 }  // cards in common with each other deck
 //       }
 function checkTournamentDecks(decks) {
   if (decks.length !== MAX_TOURNAMENT_DECKS) {
@@ -84,8 +85,8 @@ function checkTournamentDecks(decks) {
       problems.push(`Hero ${findCard(deck.hero).name} is also used in ${names}.`);
     }
 
-    // Rule 3: at least 8 unique cards.
-    // For each card, list the other decks that also have it.
+    // Rule 3: at most 4 cards in common with EACH other deck.
+    // For each card, list the other decks that also have it (for the red dots).
     const shared = {};
     for (const cardId of deck.cards) {
       const alsoIn = others
@@ -95,18 +96,22 @@ function checkTournamentDecks(decks) {
         shared[cardId] = alsoIn;
       }
     }
-    // Object.keys(shared) = list of the shared card ids (like Python's dict.keys())
-    const sharedCount = Object.keys(shared).length;
-    const uniqueCount = deck.cards.length - sharedCount;
-    if (uniqueCount < MIN_UNIQUE_CARDS) {
-      problems.push(`Only ${uniqueCount} unique cards: ${sharedCount} are shared with your other decks (max ${MAX_CARDS - MIN_UNIQUE_CARDS}).`);
+    // Count the cards in common with each other deck, one pair at a time.
+    // Python equivalent:  shared_with[o.name] = len([c for c in deck.cards if c in o.cards])
+    const sharedWith = {};
+    for (const o of others) {
+      const inCommon = deck.cards.filter(function (c) { return o.cards.includes(c); }).length;
+      sharedWith[o.name] = inCommon;
+      if (inCommon > MAX_SHARED_CARDS) {
+        problems.push(`${inCommon} cards in common with ${o.name} (max ${MAX_SHARED_CARDS}).`);
+      }
     }
 
     results[deck.id] = {
       valid: problems.length === 0,
       problems: problems,
       shared: shared,
-      uniqueCount: uniqueCount
+      sharedWith: sharedWith
     };
   }
 
